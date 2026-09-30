@@ -1,6 +1,7 @@
 {
   "name": "sebyashka",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Себяшка — ИИ-стикеры из селфи: Telegram-бот + мини-приложение",
   "workspaces": [
     "server",
