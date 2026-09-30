@@ -9,7 +9,7 @@ import { AppError } from "../src/errors.js";
 import { sendTrialFollowups } from "../src/maintenance.js";
 import { processPack, type PipelineDeps } from "../src/generation/pipeline.js";
 import { normalizeSelfie } from "../src/generation/postprocess.js";
-import { MockGenerator, ProviderConfigError, type ImageGenerator } from "../src/generation/providers.js";
+import { MockGenerator, ProviderConfigError, ProviderInputError, type ImageGenerator } from "../src/generation/providers.js";
 import { paths, Storage } from "../src/storage.js";
 import { FakeTelegram, fakeSelfie, freshDb, silentLog, TEST_DB, testConfig } from "./helpers.js";
 
@@ -258,7 +258,8 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
     await pay(u, "pack_1");
     u = await withSelfie(u);
     const p = await createPack(sql, storage, cfg, BOT, { user: u, styleId: "anime", free: false });
-    const broken: ImageGenerator = { name: "broken", generate: async () => { throw new Error("boom"); } };
+    let calls = 0;
+    const broken: ImageGenerator = { name: "broken", generate: async () => { calls++; throw new Error("boom"); } };
     const tg = new FakeTelegram();
     let outcome = "";
     for (let i = 0; i < 10 && outcome !== "failed"; i++) {
@@ -267,9 +268,25 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
       outcome = await processPack(deps(tg, broken), job);
     }
     expect(outcome).toBe("failed");
+    expect(calls).toBeLessThanOrEqual(cfg.STICKERS_PER_PACK + 4); // каждый запрос платный: по одному на стикер + бюджет повторов
     expect((await getPack(sql, p.id))!.status).toBe("failed");
     expect((await getUser(sql, u.id))!.credits).toBe(1);
     expect(tg.messages.at(-1)!.text).toContain("Вернул");
+  });
+
+  it("E2E: фото без лица (400) → без ретраев, пак провален сразу, кредит возвращён", async () => {
+    let u = await newUser();
+    await pay(u, "pack_1");
+    u = await withSelfie(u);
+    const p = await createPack(sql, storage, cfg, BOT, { user: u, styleId: "anime", free: false });
+    let calls = 0;
+    const noFace: ImageGenerator = { name: "noface", generate: async () => { calls++; throw new ProviderInputError("HTTP 400: no face detected"); } };
+    const tg = new FakeTelegram();
+    expect(await processPack(deps(tg, noFace), (await claimPack(sql))!)).toBe("failed");
+    expect(calls).toBeLessThanOrEqual(cfg.GEN_CONCURRENCY); // раньше: все стикеры × 3 попытки, и каждый запрос платный
+    expect((await getPack(sql, p.id))!.status).toBe("failed");
+    expect((await getUser(sql, u.id))!.credits).toBe(1);
+    expect(tg.messages.at(-1)!.text).toContain("лица");
   });
 
   it("E2E: неверный ключ провайдера → пак остаётся в очереди, деньги не трогаем", async () => {

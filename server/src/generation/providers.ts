@@ -26,6 +26,11 @@ export class ProviderConfigError extends Error {
   override name = "ProviderConfigError";
 }
 
+/** Провайдер отверг само фото (400, например «лицо не найдено») - ретраи только жгут деньги, каждый запрос тарифицируется. */
+export class ProviderInputError extends Error {
+  override name = "ProviderInputError";
+}
+
 /** Временная ошибка (таймаут, 5xx, 429) - стоит повторить. */
 export class ProviderTransientError extends Error {
   override name = "ProviderTransientError";
@@ -92,6 +97,10 @@ async function http(url: string, init: RequestInit, timeoutMs: number, signal?: 
   if (res.status === 401 || res.status === 403 || res.status === 402 || res.status === 404 || res.status === 422) {
     const body = await res.text().catch(() => "");
     throw new ProviderConfigError(`HTTP ${res.status}: ${body.slice(0, 300)}`);
+  }
+  if (res.status === 400) {
+    const body = await res.text().catch(() => "");
+    throw new ProviderInputError(`HTTP 400: ${body.slice(0, 300)}`);
   }
   if (res.status === 429 || res.status >= 500) {
     throw new ProviderTransientError(`HTTP ${res.status}`);

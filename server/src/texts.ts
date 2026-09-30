@@ -49,6 +49,7 @@ export const T = {
 
 export function failureReasonForUser(internal: string): string {
   if (/NSFW|safety|content/i.test(internal)) return "нейросеть отклонила фото по правилам безопасности";
+  if (/no face|фото отклонено/i.test(internal)) return "на фото не нашлось лица - загрузи другое, где лицо видно крупно";
   if (/фото удалено|селфи удалено|selfie/i.test(internal)) return "фото устарело - загрузи новое";
   if (/мало удачных|too few/i.test(internal)) return "нейросеть не справилась с этим фото";
   return "технический сбой";

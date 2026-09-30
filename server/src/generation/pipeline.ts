@@ -11,7 +11,7 @@ import { classifyTelegramError, type TelegramGateway } from "../telegram/gateway
 import { esc, failureReasonForUser, T } from "../texts.js";
 import type { AdminNotifier } from "../admin/notifier.js";
 import { pixelate, toSticker } from "./postprocess.js";
-import { ProviderConfigError, type ImageGenerator } from "./providers.js";
+import { ProviderConfigError, ProviderInputError, type ImageGenerator } from "./providers.js";
 
 export interface PipelineDeps {
   sql: Sql;
@@ -27,8 +27,11 @@ export interface PipelineDeps {
   notifier?: AdminNotifier;
 }
 
-const MAX_PACK_ATTEMPTS = 5;
-const STICKER_TRIES = 3;
+const MAX_PACK_ATTEMPTS = 3;
+/** Каждая попытка платная (fal тарифицирует и ошибки). Повторы только у платных паков и с общим бюджетом на пак:
+ * худший пак = 16 + RETRY_BUDGET запросов, это дешевле любой выручки за пак (Pro: ~$1.08 за пак). */
+const RETRY_BUDGET = 4;
+const triesFor = (pack: PackRow) => (pack.credits_spent > 0 ? 2 : 1);
 
 export type ProcessOutcome = "ready" | "failed" | "requeued" | "needs_start";
 
@@ -64,18 +67,25 @@ export async function processPack(d: PipelineDeps, pack: PackRow, signal?: Abort
   }
 
   const stickers = await packStickers(d.sql, pack.id);
-  const pending = stickers.filter((s) => s.status === "pending" || (s.status === "failed" && s.attempts < STICKER_TRIES));
+  const tries = triesFor(pack);
+  const budget = { left: RETRY_BUDGET };
+  const pending = stickers.filter((s) => s.status === "pending" || (s.status === "failed" && s.attempts < tries));
   let configError: ProviderConfigError | null = null;
+  let inputError: ProviderInputError | null = null;
   const hb = setInterval(() => void heartbeat(d.sql, pack.id).catch(() => {}), 60_000);
 
   try {
     await mapLimit(pending, d.cfg.GEN_CONCURRENCY, async (s) => {
-      if (configError || signal?.aborted) return;
+      if (configError || inputError || signal?.aborted) return;
       try {
-        await generateOne(d, pack, s, selfie, style, signal);
+        await generateOne(d, pack, s, selfie, style, tries, budget, signal);
       } catch (e) {
         if (e instanceof ProviderConfigError) {
           configError = e;
+          return;
+        }
+        if (e instanceof ProviderInputError) {
+          inputError = e;
           return;
         }
         log.warn({ err: (e as Error).message, idx: s.idx }, "стикер не получился");
@@ -97,18 +107,14 @@ export async function processPack(d: PipelineDeps, pack: PackRow, signal?: Abort
     await requeue(d.sql, pack.id, "воркер остановлен");
     return "requeued";
   }
+  // Фото не подошло: остальные стикеры упали бы так же, не тратим деньги, возвращаем кредит.
+  if (inputError) return fail(d, pack, `фото отклонено провайдером: ${(inputError as Error).message}`);
 
   const after = await packStickers(d.sql, pack.id);
   const done = after.filter((s) => s.status === "done");
-  const retryable = after.filter((s) => s.status === "failed" && s.attempts < STICKER_TRIES);
   const minOk = Math.ceil(pack.total * d.cfg.MIN_SUCCESS_RATIO);
-  if (done.length < minOk) {
-    if (retryable.length && pack.attempts < MAX_PACK_ATTEMPTS) {
-      await requeue(d.sql, pack.id, `удачных ${done.length}/${pack.total}, повторим`);
-      return "requeued";
-    }
-    return fail(d, pack, `мало удачных стикеров: ${done.length}/${pack.total}`);
-  }
+  // Не перезапускаем пак ради добивки: каждый запрос платный, а при провале кредит возвращается.
+  if (done.length < minOk) return fail(d, pack, `мало удачных стикеров: ${done.length}/${pack.total}`);
 
   return upload(d, pack, done);
 }
@@ -119,11 +125,13 @@ async function generateOne(
   s: StickerRow,
   selfie: Buffer,
   style: NonNullable<ReturnType<typeof getStyle>>,
+  tries: number,
+  budget: { left: number },
   signal?: AbortSignal,
 ): Promise<void> {
   const emotion = EMOTIONS.find((e) => e.id === s.emotion_id) ?? { id: s.emotion_id, emoji: s.emoji, title: "", prompt: s.emotion_id };
   let lastErr: unknown;
-  for (let attempt = s.attempts; attempt < STICKER_TRIES; attempt++) {
+  for (let attempt = s.attempts; attempt < tries; attempt++) {
     try {
       const raw = await d.generator.generate(
         {
@@ -156,12 +164,13 @@ async function generateOne(
       await d.sql`UPDATE packs SET done = (SELECT count(*) FROM stickers WHERE pack_id = ${pack.id} AND status = 'done'), updated_at = now() WHERE id = ${pack.id}`;
       return;
     } catch (e) {
-      if (e instanceof ProviderConfigError) throw e;
+      if (e instanceof ProviderConfigError || e instanceof ProviderInputError) throw e;
       lastErr = e;
       await d.sql`UPDATE stickers SET status = 'failed', error = ${String((e as Error).message).slice(0, 300)}, attempts = ${attempt + 1} WHERE id = ${s.id}`;
       if (signal?.aborted) return;
       // Пауза перед повтором: провайдеры режут по частоте (429), нельзя долбить сразу.
-      if (attempt + 1 < STICKER_TRIES) await new Promise((r) => setTimeout(r, d.cfg.NODE_ENV === "test" ? 10 : 2000 * 2 ** attempt));
+      if (attempt + 1 >= tries || budget.left-- <= 0) break;
+      await new Promise((r) => setTimeout(r, d.cfg.NODE_ENV === "test" ? 10 : 2000 * 2 ** attempt));
     }
   }
   throw lastErr;
