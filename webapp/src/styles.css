@@ -774,17 +774,7 @@ img {
   border: 2px solid var(--bg);
 }
 
-/* После пробы: закрытые эмоции - свой стикер под блюром, замок и название. */
+/* После пробы: закрытые эмоции - свой стикер под блюром и замок, без названий. */
 .locked-cell img { filter: blur(5px) grayscale(0.4); opacity: 0.45; }
-.locked-cell .lock { position: absolute; top: 6px; right: 6px; opacity: 0.75; }
-.locked-cell span {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  bottom: 6px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.1;
-}
+.locked-cell .lock { position: relative; opacity: 0.8; }
 .locked-cell b { font-size: 18px; }

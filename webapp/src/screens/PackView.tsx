@@ -302,8 +302,7 @@ function TrialUpsell({ pack, heroUrl }: { pack: Pack; heroUrl?: string }) {
         {shown.map((t) => (
           <div key={t} className="sticker-cell locked-cell">
             {heroUrl && <img src={heroUrl} alt="" />}
-            <Lock size={14} className="lock" />
-            <span>{t}</span>
+            <Lock size={18} className="lock" />
           </div>
         ))}
         {locked.length > shown.length && (
