@@ -1,0 +1,19 @@
+{
+  "name": "sebyashka",
+  "private": true,
+  "description": "Себяшка — ИИ-стикеры из селфи: Telegram-бот + мини-приложение",
+  "workspaces": [
+    "server",
+    "webapp"
+  ],
+  "scripts": {
+    "build": "npm run build -w webapp && npm run build -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w webapp",
+    "test": "npm run test -w server",
+    "dev:server": "npm run dev -w server",
+    "dev:webapp": "npm run dev -w webapp"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

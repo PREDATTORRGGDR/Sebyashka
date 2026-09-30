@@ -1,0 +1,75 @@
+# Прод-стек на одном VPS: Caddy (HTTPS) → app (API + бот) и worker (генерация) → Postgres.
+# Запуск: docker compose up -d --build   (подробно — DEPLOY.md)
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sebyashka}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задай POSTGRES_PASSWORD в .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sebyashka}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Порт наружу не публикуем — база доступна только контейнерам.
+
+  app:
+    build: .
+    image: sebyashka:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ROLE: api
+      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sebyashka}
+    volumes:
+      - appdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  worker:
+    build: .
+    image: sebyashka:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ROLE: worker
+      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sebyashka}
+    volumes:
+      - appdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
+    # Масштабирование генерации: docker compose up -d --scale worker=3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?задай DOMAIN в .env}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  appdata:
+  caddy_data:
+  caddy_config:

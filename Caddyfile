@@ -1,0 +1,25 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Caddy сам выпускает и продлевает сертификат Let's Encrypt для домена.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Загрузка селфи до 25 МБ.
+	request_body {
+		max_size 25MB
+	}
+
+	reverse_proxy app:3000 {
+		health_uri /health
+		health_interval 15s
+	}
+}
