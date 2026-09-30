@@ -60,7 +60,7 @@ const schema = z
 
     GEN_PROVIDER: z.enum(["mock", "fal", "replicate"]).default("mock"),
     FAL_KEY: z.string().optional(),
-    FAL_MODEL: z.string().default("fal-ai/flux-pulid"),
+    FAL_MODEL: z.string().default("fal-ai/bytedance/seedream/v4/edit"),
     FAL_INPUT_TEMPLATE: z.string().optional(),
     REPLICATE_TOKEN: z.string().optional(),
     // owner/name для официальных моделей или owner/name:version

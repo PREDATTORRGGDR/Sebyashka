@@ -136,16 +136,14 @@ const sleep = (ms: number, signal?: AbortSignal) =>
 /* fal.ai - queue API                                                  */
 /* ------------------------------------------------------------------ */
 
+// Seedream 4 edit: $0.03 за картинку, принимает фото-референс, работает и с людьми, и с животными/персонажами.
+// negative_prompt у модели нет, запреты (текст, фон) - в самом промпте. Минимум модели ~0.92 МП, поэтому square_hd.
 const FAL_DEFAULT_TEMPLATE = JSON.stringify({
   prompt: "{{prompt}}",
-  reference_image_url: "{{image_url}}",
-  negative_prompt: "{{negative_prompt}}",
+  image_urls: ["{{image_url}}"],
+  image_size: "square_hd",
+  num_images: 1,
   seed: "{{seed}}",
-  image_size: "square",
-  num_inference_steps: 20,
-  guidance_scale: 4,
-  id_weight: 1,
-  true_cfg: 1,
 });
 
 export class FalGenerator implements ImageGenerator {

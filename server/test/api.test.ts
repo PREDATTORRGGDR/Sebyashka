@@ -55,12 +55,11 @@ describe("чистые функции", () => {
     expect(sanitizeWish("голый").ok).toBe(false);
     expect(sanitizeWish("nsfw please").ok).toBe(false);
   });
-  it("промпт про человека с фото + пожелание, без животных", () => {
+  it("промпт велит сохранить субъекта с фото + пожелание в конце", () => {
     const p = buildPrompt(STYLES[0]!, EMOTIONS[0]!, "с гитарой");
-    expect(p).toContain("same person");
+    expect(p).toContain("identical face");
     expect(p.endsWith("с гитарой.")).toBe(true);
-    for (const e of EMOTIONS) expect(buildPrompt(STYLES[0]!, e)).not.toMatch(/\b(pet|puppy|dog|cat|animal)/i);
-    expect(p).toContain("с гитарой");
+    for (const e of EMOTIONS) expect(buildPrompt(STYLES[0]!, e)).not.toMatch(/puppy|dog|cat\b/i); // у PuLID эти слова рисовались буквально
     expect(STYLES.find((s) => s.id === "original")).toBeTruthy();
   });
 });

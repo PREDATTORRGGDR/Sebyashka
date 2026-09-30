@@ -286,7 +286,7 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
     expect(calls).toBeLessThanOrEqual(cfg.GEN_CONCURRENCY); // раньше: все стикеры × 3 попытки, и каждый запрос платный
     expect((await getPack(sql, p.id))!.status).toBe("failed");
     expect((await getUser(sql, u.id))!.credits).toBe(1);
-    expect(tg.messages.at(-1)!.text).toContain("лица");
+    expect(tg.messages.at(-1)!.text).toContain("другое");
   });
 
   it("E2E: неверный ключ провайдера → пак остаётся в очереди, деньги не трогаем", async () => {

@@ -8,7 +8,7 @@ export interface Style {
   title: string;
   description: string;
   premium: boolean;
-  /** Описание стиля для модели. Подобрано на тестовых генерациях PuLID (сентябрь 2026). */
+  /** Описание стиля для модели. Подобрано на тестовых генерациях PuLID (сентябрь 2026), на Seedream не перепроверялось. */
   prompt: string;
   /** Стиль ещё раз в конце промпта («Die-cut <tag> sticker»), чтобы 16 стикеров пака не расползались по стилю. */
   tag: string;
@@ -135,13 +135,15 @@ export const NEGATIVE_PROMPT =
   "text, letters, watermark, logo, signature, multiple people, extra limbs, extra fingers, deformed face, blurry, lowres, busy background, scenery, frame, border, nsfw, nudity";
 
 export function buildPrompt(style: Style, emotion: Emotion, wish?: string | null): string {
-  // PuLID берёт с фото только лицо, стиль и всё остальное - из текста. Поэтому про животных и «рисовку с фото» тут ни слова:
-  // слова pet / puppy модель рисовала буквально. Лимит модели 128 токенов: пожелание в конце, чтобы при обрезке терялось оно.
+  // Модель - edit (Seedream 4): фото уже референс, поэтому главное - велеть сохранить субъекта один в один.
+  // Субъект может быть не человеком (кот, игрушка, персонаж) - тогда оставляем его облик. Пожелание в конце.
   return [
-    `${style.prompt}.`,
-    `The same person as in the reference photo, same age, wearing ${style.outfit ?? "casual clothes"}, ${emotion.prompt}, exaggerated expression.`,
-    "Head and shoulders, centered, a single person.",
-    `Die-cut ${style.tag} sticker with a thick white outline on a plain white background, no text.`,
+    "Turn the subject of the reference photo into a sticker.",
+    "Keep the subject exactly the same: identical face, facial features, skin tone, hair, age and gender, instantly recognizable as the same individual. If it is not a person (an animal, toy or character), keep its exact look, colors and markings.",
+    `Style: ${style.prompt}.`,
+    `If it is a person, dress them in ${style.outfit ?? "casual clothes"}. Expression and pose: ${emotion.prompt}, exaggerated.`,
+    "Head and shoulders, centered, a single subject.",
+    `Die-cut ${style.tag} sticker with a thick white outline on a plain white background, no text, no watermark.`,
     wish ? `Extra details: ${wish}.` : "",
   ]
     .filter(Boolean)
