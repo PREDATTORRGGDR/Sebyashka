@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { CircleUser, House, RefreshCw, ShieldCheck, Sparkles, Store } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type Me } from "./api";
 import { ErrorArt, LoadingArt } from "./art";
 import { Create } from "./screens/Create";
@@ -48,8 +48,14 @@ export function App() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
+  const meRef = useRef(me);
+  meRef.current = me;
+
   const go = useCallback((r: Route) => {
     haptic.select();
+    // Пока пак собирается, «Создать» открывает его, а не новый.
+    const active = meRef.current?.active;
+    if (r.name === "create" && active) r = { name: "pack", id: active.id };
     setRoute(r);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);

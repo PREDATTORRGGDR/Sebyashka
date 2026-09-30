@@ -45,13 +45,17 @@ const TIPS = [
   { icon: <Shapes size={16} />, text: "Один герой в кадре" },
 ];
 
+const STEPS = ["photo", "preview", "style"] as const;
+type Step = (typeof STEPS)[number];
+const TITLES: Record<Step, string> = { photo: "Загрузи фото", preview: "Проверь фото", style: "Выбери стиль" };
+
 const WISH_IDEAS = ["в костюме супергероя", "с гитарой", "в очках и кепке", "в космосе", "с чашкой кофе"];
 
 export function Create() {
   const { me, refresh, go } = useApp();
   const toast = useToast();
   const { user, catalog } = me;
-  const [step, setStep] = useState<"photo" | "style">(user.hasSelfie ? "style" : "photo");
+  const [step, setStep] = useState<Step>(user.hasSelfie ? "style" : "photo");
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [styleId, setStyleId] = useState<string>(catalog.styles[0]?.id ?? "");
@@ -68,15 +72,16 @@ export function Create() {
     if (!f) return;
     if (!f.type.startsWith("image/") && !/\.(heic|heif)$/i.test(f.name)) return toast("Нужна картинка", "err");
     setPreview(URL.createObjectURL(f));
+    setStep("preview");
     setUploading(true);
     try {
       const blob = await compressImage(f);
       await api.uploadSelfie(blob);
       await refresh();
       haptic.ok();
-      setStep("style");
     } catch (e) {
       setPreview(null);
+      setStep("photo");
       toast(e instanceof ApiError ? e.message : "Не удалось загрузить фото", "err");
     } finally {
       setUploading(false);
@@ -113,11 +118,11 @@ export function Create() {
     <div className="screen">
       <div className="col" style={{ gap: 12 }}>
         <div className="steps">
-          <span className="on" />
-          <span className={step === "style" ? "on" : ""} />
-          <span />
+          {STEPS.map((s, i) => (
+            <span key={s} className={i <= STEPS.indexOf(step) ? "on" : ""} />
+          ))}
         </div>
-        <h1 className="h1">{step === "photo" ? "Загрузи фото" : "Выбери стиль"}</h1>
+        <h1 className="h1">{TITLES[step]}</h1>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
@@ -158,13 +163,38 @@ export function Create() {
             </Button>
             <div className="faint small center">Чужие фото - только с согласия человека</div>
           </motion.div>
+        ) : step === "preview" ? (
+          <motion.div key="preview" className="col" style={{ gap: 16 }} {...pageMotion}>
+            <Glass className="card col center" style={{ gap: 14 }}>
+              {preview && (
+                <motion.img
+                  src={preview}
+                  style={{ width: "100%", maxHeight: 360, objectFit: "contain", borderRadius: 20 }}
+                  initial={{ scale: 0.92, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={spring}
+                />
+              )}
+              <div className="muted small">Герой крупно, лицо хорошо видно? Тогда дальше</div>
+            </Glass>
+            <Button loading={uploading} icon={<Check size={20} />} onClick={() => setStep("style")}>
+              {uploading ? "Загружаю…" : "Продолжить"}
+            </Button>
+            <Button variant="ghost" icon={<RefreshCw size={18} />} disabled={uploading} onClick={() => fileRef.current?.click()}>
+              Выбрать другое фото
+            </Button>
+          </motion.div>
         ) : (
           <motion.div key="style" className="col" style={{ gap: 16 }} {...pageMotion}>
             <Glass className="card tight row between">
               <div className="row">
-                <div className="glass" style={{ width: 40, height: 40, borderRadius: 14, display: "grid", placeItems: "center" }}>
-                  <Check size={18} />
-                </div>
+                {preview ? (
+                  <img src={preview} style={{ width: 40, height: 40, borderRadius: 14, objectFit: "cover" }} />
+                ) : (
+                  <div className="glass" style={{ width: 40, height: 40, borderRadius: 14, display: "grid", placeItems: "center" }}>
+                    <Check size={18} />
+                  </div>
+                )}
                 <div>
                   <div style={{ fontWeight: 650 }}>Фото загружено</div>
                   <div className="faint small">Можно заменить в любой момент</div>

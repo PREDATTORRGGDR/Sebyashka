@@ -23,7 +23,9 @@ export function PackView({ id }: { id: string }) {
         const { pack } = await api.pack(id);
         if (!alive) return;
         setPack(pack);
-        if (prevStatus.current && prevStatus.current !== pack.status) {
+        const finished = pack.status === "ready" || pack.status === "failed";
+        // Пак закончился, пока экран был закрыт: me.active устарел, иначе «Создать» будет вести сюда.
+        if ((prevStatus.current && prevStatus.current !== pack.status) || (!prevStatus.current && finished && me.active?.id === pack.id)) {
           if (pack.status === "ready") haptic.ok();
           if (pack.status === "failed") haptic.err();
           void refresh();
