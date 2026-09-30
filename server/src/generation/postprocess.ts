@@ -117,6 +117,13 @@ export interface PostprocessOptions {
   removeBackground: boolean;
 }
 
+/** Пиксель-арт: уменьшаем до size×size и растягиваем обратно без сглаживания. Белый фон остаётся ровным, вырезка работает. */
+export async function pixelate(input: Buffer, size: number): Promise<Buffer> {
+  const { width = 512, height = 512 } = await sharp(input).metadata();
+  const small = await sharp(input).resize(size, size, { kernel: "nearest", fit: "fill" }).png().toBuffer();
+  return sharp(small).resize(width, height, { kernel: "nearest", fit: "fill" }).png().toBuffer();
+}
+
 /**
  * Превращает картинку от генератора в готовый стикер Telegram:
  * вырезка фона → обрезка по содержимому → белая обводка → 512 px → PNG (или WEBP, если PNG > 512 КБ).

@@ -182,9 +182,8 @@ export function PackView({ id }: { id: string }) {
                 icon={<Share2 size={18} />}
                 onClick={() => {
                   void api.track("share", { from: "pack" });
-                  // Ссылка на сам пак (Telegram покажет превью), реферальная - в тексте, чтобы друг пришёл к нам.
-                  share(pack.addUrl!, `Смотри, какие стикеры я сделал 😂
-Сделай свои из любого фото бесплатно: ${me.user.referralLink}`);
+                  // Одна ссылка - на сам пак: со второй ссылкой в тексте Telegram показывал превью реферальной.
+                  share(pack.addUrl!, `Смотри, какие стикеры я сделал 😂 Сделай свои из любого фото в @${me.bot.username}`);
                 }}
               >
                 Похвастаться

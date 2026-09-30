@@ -186,7 +186,7 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
           active: active ? await serializePack(active, sql, signer, false) : null,
           notices,
           catalog: {
-            styles: STYLES.map(({ prompt: _p, ...s }) => s),
+            styles: STYLES.map(({ prompt: _p, tag: _t, outfit: _o, pixelate: _x, ...s }) => s),
             wishMaxLen: WISH_MAX_LEN,
             products: PRODUCTS,
             freePackSize: cfg.FREE_PACK_SIZE,

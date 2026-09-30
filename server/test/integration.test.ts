@@ -102,11 +102,22 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
     const invitee = await newUser();
     expect(await attachReferrer(sql, invitee.id, invitee.referral_code)).toBeNull(); // сам себя
     expect(await attachReferrer(sql, inviter.id, invitee.referral_code)).toBeNull(); // старший к младшему — нельзя
-    expect(await attachReferrer(sql, invitee.id, inviter.referral_code)).toBe(inviter.id);
+    expect(await attachReferrer(sql, invitee.id, inviter.referral_code)).toEqual({ referrerId: inviter.id, rewarded: false });
     expect(await attachReferrer(sql, invitee.id, inviter.referral_code)).toBeNull(); // повторно
     await pay(invitee, "pack_1");
     await pay(invitee, "pack_1");
     expect((await getUser(sql, inviter.id))!.credits).toBe(1);
+  });
+
+  it("рефералка: +1 пак за каждых 3 приглашённых, ровно на третьем", async () => {
+    const inviter = await newUser();
+    const got: boolean[] = [];
+    for (let i = 0; i < 6; i++) {
+      const friend = await newUser();
+      got.push((await attachReferrer(sql, friend.id, inviter.referral_code))!.rewarded);
+    }
+    expect(got).toEqual([false, false, true, false, false, true]);
+    expect((await getUser(sql, inviter.id))!.credits).toBe(2);
   });
 
   it("подарок: покупка → код → активация другом один раз", async () => {

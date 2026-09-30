@@ -8,72 +8,91 @@ export interface Style {
   title: string;
   description: string;
   premium: boolean;
+  /** Описание стиля для модели. Подобрано на тестовых генерациях PuLID (сентябрь 2026). */
   prompt: string;
+  /** Стиль ещё раз в конце промпта («Die-cut <tag> sticker»), чтобы 16 стикеров пака не расползались по стилю. */
+  tag: string;
+  /** Одежда: без неё «3D», «Пластилин» и «Акварель» иногда рисовали голый торс. */
+  outfit?: string;
+  /** Пикселизация готовой картинки до N×N (только пиксель-арт). */
+  pixelate?: number;
 }
 
 export const STYLES: readonly Style[] = [
   {
     id: "original",
     title: "Как на фото",
-    description: "Сохраняет рисовку персонажа - для героев, питомцев, аватарок",
+    description: "Реалистично: твоё лицо как на фото, только с эмоциями",
     premium: false,
-    prompt: "keep the exact original art style, colors and design of the character from the reference image",
+    prompt: "Photorealistic portrait photo, realistic skin texture, natural light and colors, true-to-life face and hair, not a drawing",
+    tag: "photo",
   },
   {
     id: "cartoon3d",
     title: "3D-мульт",
     description: "Объёмный персонаж как из анимационного фильма",
     premium: false,
-    prompt: "3d cartoon character render, soft studio lighting, big expressive eyes, smooth shading",
+    prompt: "3D animated movie character render, soft studio lighting, smooth shading, detailed hair",
+    tag: "3D cartoon",
   },
   {
     id: "anime",
     title: "Аниме",
     description: "Яркий аниме-рисунок с чёткими линиями",
     premium: false,
-    prompt: "anime illustration, cel shading, clean line art, vibrant colors",
+    prompt: "Anime illustration, clean line art, cel shading, vibrant colors",
+    tag: "anime",
   },
   {
     id: "comic",
     title: "Комикс",
     description: "Жирный контур и сочные цвета",
     premium: false,
-    prompt: "comic book style, bold ink outlines, flat vivid colors, halftone accents",
+    prompt: "Comic book illustration, bold ink outlines, flat vivid colors, halftone accents",
+    tag: "comic book",
   },
   {
     id: "chibi",
     title: "Чиби",
     description: "Милая версия тебя с большой головой",
     premium: true,
-    prompt: "chibi character, oversized head, tiny body, kawaii, pastel colors, cute",
+    prompt: "Chibi caricature with an oversized head and a small body, pastel colors, same face features and hairstyle",
+    tag: "chibi",
   },
   {
     id: "pixel",
     title: "Пиксель-арт",
     description: "Ретро-игра 16 бит",
     premium: true,
-    prompt: "16-bit pixel art character sprite, crisp pixels, limited palette, retro game",
+    prompt: "Pixel art. 8-bit pixel art character portrait like a classic video game, chunky visible pixels, no anti-aliasing, flat colors",
+    tag: "pixel art",
+    pixelate: 96,
   },
   {
     id: "clay",
     title: "Пластилин",
     description: "Словно слеплено руками",
     premium: true,
-    prompt: "claymation character, plasticine texture, handmade stop-motion look",
+    prompt: "Claymation figure, plasticine texture, visible fingerprints in clay, handmade stop-motion look",
+    tag: "claymation",
+    outfit: "a plasticine t-shirt",
   },
   {
     id: "cyberpunk",
     title: "Киберпанк",
     description: "Неон, импланты и ночной город в глазах",
     premium: true,
-    prompt: "cyberpunk character, neon rim light, futuristic accessories, glowing accents",
+    prompt: "Cyberpunk portrait, neon rim light, futuristic accessories, glowing accents",
+    tag: "cyberpunk",
+    outfit: "a techwear jacket",
   },
   {
     id: "watercolor",
     title: "Акварель",
     description: "Нежный рисунок кистью",
     premium: true,
-    prompt: "watercolor illustration, soft washes, paper texture, delicate brush strokes",
+    prompt: "Delicate watercolor and ink illustration, thin ink linework, translucent watercolor washes, splashes of pigment, storybook art",
+    tag: "watercolor",
   },
 ] as const;
 
@@ -88,27 +107,27 @@ export interface Emotion {
 export const EMOTIONS: readonly Emotion[] = [
   { id: "happy", emoji: "😄", title: "Радость", prompt: "big happy smile" },
   { id: "lol", emoji: "😂", title: "Ржу", prompt: "laughing hard with tears of joy" },
-  { id: "love", emoji: "😍", title: "Влюблён", prompt: "heart eyes, in love, dreamy" },
+  { id: "love", emoji: "😍", title: "Влюблён", prompt: "in love, heart-shaped eyes, dreamy smile" },
   { id: "cool", emoji: "😎", title: "Крутой", prompt: "wearing sunglasses, confident cool smirk" },
-  { id: "shock", emoji: "😱", title: "Шок", prompt: "shocked, hands on cheeks, screaming" },
+  { id: "shock", emoji: "😱", title: "Шок", prompt: "shocked, mouth wide open, hands on cheeks" },
   { id: "cry", emoji: "😭", title: "Плачу", prompt: "crying loudly, streams of tears" },
   { id: "angry", emoji: "😡", title: "Злой", prompt: "furious angry face, red cheeks, steam" },
   { id: "think", emoji: "🤔", title: "Думаю", prompt: "thinking, hand on chin, one eyebrow raised" },
   { id: "ok", emoji: "👍", title: "Ок", prompt: "giving thumbs up, friendly smile" },
   { id: "hi", emoji: "👋", title: "Привет", prompt: "waving hello, cheerful" },
-  { id: "facepalm", emoji: "🤦", title: "Фейспалм", prompt: "facepalm, hand covering face, disappointed" },
-  { id: "sleep", emoji: "😴", title: "Сплю", prompt: "sleeping, eyes closed, zzz, drooling a little" },
-  { id: "party", emoji: "🥳", title: "Праздник", prompt: "party hat, confetti, celebrating" },
+  { id: "facepalm", emoji: "🤦", title: "Фейспалм", prompt: "facepalm, one hand on the forehead, disappointed" },
+  { id: "sleep", emoji: "😴", title: "Сплю", prompt: "sleeping peacefully, eyes closed, head tilted" },
+  { id: "party", emoji: "🥳", title: "Праздник", prompt: "wearing a party hat, blowing a party horn, celebrating" },
   { id: "wink", emoji: "😉", title: "Подмигиваю", prompt: "winking playfully" },
   { id: "cringe", emoji: "😬", title: "Кринж", prompt: "awkward cringe grimace, teeth clenched" },
-  { id: "please", emoji: "🙏", title: "Ну пожалуйста", prompt: "begging, hands pressed together, puppy eyes" },
-  { id: "mindblown", emoji: "🤯", title: "Мозг взорван", prompt: "mind blown, exploding head effect" },
-  { id: "yum", emoji: "😋", title: "Вкусно", prompt: "licking lips, delicious food" },
+  { id: "please", emoji: "🙏", title: "Ну пожалуйста", prompt: "begging, hands pressed together, big pleading eyes" },
+  { id: "mindblown", emoji: "🤯", title: "Мозг взорван", prompt: "mind blown, both hands on the head, amazed wide eyes" },
+  { id: "yum", emoji: "😋", title: "Вкусно", prompt: "licking lips, holding a tasty snack" },
   { id: "shy", emoji: "😳", title: "Смущаюсь", prompt: "blushing, embarrassed, shy" },
   { id: "bored", emoji: "😒", title: "Скучно", prompt: "bored unimpressed side eye" },
-  { id: "fire", emoji: "🔥", title: "Огонь", prompt: "excited, surrounded by fire flames, hyped" },
+  { id: "fire", emoji: "🔥", title: "Огонь", prompt: "hyped and excited, fists up, fiery orange glow behind" },
   { id: "heart", emoji: "❤️", title: "Люблю", prompt: "holding a big red heart" },
-  { id: "money", emoji: "🤑", title: "Богатею", prompt: "money eyes, holding cash, greedy grin" },
+  { id: "money", emoji: "🤑", title: "Богатею", prompt: "greedy grin, holding a fan of cash" },
   { id: "salute", emoji: "🫡", title: "Есть!", prompt: "saluting, determined" },
 ] as const;
 
@@ -116,16 +135,17 @@ export const NEGATIVE_PROMPT =
   "text, letters, watermark, logo, signature, multiple people, extra limbs, extra fingers, deformed face, blurry, lowres, busy background, scenery, frame, border, nsfw, nudity";
 
 export function buildPrompt(style: Style, emotion: Emotion, wish?: string | null): string {
+  // PuLID берёт с фото только лицо, стиль и всё остальное - из текста. Поэтому про животных и «рисовку с фото» тут ни слова:
+  // слова pet / puppy модель рисовала буквально. Лимит модели 128 токенов: пожелание в конце, чтобы при обрезке терялось оно.
   return [
-    // Фото может быть любым: человек, питомец, мультяшный персонаж, игрушка.
-    "die-cut sticker of the same character from the reference image (person, pet or cartoon character), keep identity recognizable",
-    emotion.prompt,
-    style.prompt,
-    wish ? `extra details: ${wish}` : "",
-    "upper body, centered, expressive, high detail, plain pure white background, no text",
+    `${style.prompt}.`,
+    `The same person as in the reference photo, same age, wearing ${style.outfit ?? "casual clothes"}, ${emotion.prompt}, exaggerated expression.`,
+    "Head and shoulders, centered, a single person.",
+    `Die-cut ${style.tag} sticker with a thick white outline on a plain white background, no text.`,
+    wish ? `Extra details: ${wish}.` : "",
   ]
     .filter(Boolean)
-    .join(", ");
+    .join(" ");
 }
 
 /** Максимальная длина пожелания к паку. */

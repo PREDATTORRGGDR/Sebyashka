@@ -10,7 +10,7 @@ import { paths, type Storage } from "../storage.js";
 import { classifyTelegramError, type TelegramGateway } from "../telegram/gateway.js";
 import { esc, failureReasonForUser, T } from "../texts.js";
 import type { AdminNotifier } from "../admin/notifier.js";
-import { toSticker } from "./postprocess.js";
+import { pixelate, toSticker } from "./postprocess.js";
 import { ProviderConfigError, type ImageGenerator } from "./providers.js";
 
 export interface PipelineDeps {
@@ -137,7 +137,8 @@ async function generateOne(
         },
         signal,
       );
-      let img = raw;
+      // Модель рисует «пиксель-арт» то с пикселями, то гладко (зависит от seed) - доводим сами.
+      let img = style.pixelate ? await pixelate(raw, style.pixelate) : raw;
       let removeBg = d.cfg.BG_REMOVAL === "local";
       if (d.bgRemover?.removeBackground) {
         try {

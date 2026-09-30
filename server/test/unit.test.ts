@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { EMOTIONS, PRODUCTS, STYLES, styleCost, buildPrompt } from "../src/domain/catalog.js";
 import { stickerSetName, stickerSetTitle } from "../src/domain/packs.js";
-import { alphaBBox, normalizeSelfie, removeFlatBackground, STICKER_MAX_BYTES, toSticker } from "../src/generation/postprocess.js";
+import { alphaBBox, normalizeSelfie, pixelate, removeFlatBackground, STICKER_MAX_BYTES, toSticker } from "../src/generation/postprocess.js";
 import { findImageUrl, MockGenerator, renderTemplate, ProviderConfigError } from "../src/generation/providers.js";
 import { seedFor } from "../src/generation/pipeline.js";
 import { verifyCryptoBotSignature } from "../src/payments/cryptobot.js";
@@ -112,6 +112,15 @@ describe("имена наборов стикеров", () => {
 });
 
 describe("обработка изображений", () => {
+  it("pixelate: размер тот же, картинка из ровных блоков", async () => {
+    const out = await pixelate(await fakeSelfie(), 16);
+    const { data, info } = await sharp(out).raw().toBuffer({ resolveWithObject: true });
+    expect([info.width, info.height]).toEqual([600, 600]); // fakeSelfie 600×600
+    const block = info.width / 16;
+    const px = (x: number, y: number) => data.readUInt32BE((y * info.width + x) * info.channels) >>> 8;
+    // Внутри одного блока все пиксели одинаковые.
+    expect(px(1, 1)).toBe(px(Math.floor(block) - 1, Math.floor(block) - 1));
+  });
   it("селфи нормализуется, маленькие отвергаются", async () => {
     const out = await normalizeSelfie(await fakeSelfie());
     const m = await sharp(out).metadata();
