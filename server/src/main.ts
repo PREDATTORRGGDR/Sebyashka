@@ -5,7 +5,7 @@ import { createDb, migrate } from "./db/client.js";
 import { createBgRemover, createGenerator } from "./generation/providers.js";
 import { runWorker } from "./generation/pipeline.js";
 import { createLogger } from "./logger.js";
-import { cleanup } from "./maintenance.js";
+import { cleanup, sendTrialFollowups } from "./maintenance.js";
 import { PaymentService } from "./payments/service.js";
 import { Storage, UrlSigner } from "./storage.js";
 import { configureBotProfile, setupBot } from "./telegram/bot.js";
@@ -81,6 +81,8 @@ async function main() {
       }
     };
     timers.push(setInterval(poll, 60_000));
+    const followups = () => sendTrialFollowups(sql, tg, cfg, log).catch((e) => log.warn({ err: (e as Error).message }, "напоминания после пробы"));
+    timers.push(setInterval(followups, 5 * 60_000));
   }
 
   if (cfg.ROLE === "all" || cfg.ROLE === "worker") {

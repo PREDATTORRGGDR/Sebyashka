@@ -2,6 +2,10 @@ import type { Config } from "./config.js";
 import type { Sql } from "./db/client.js";
 import type { Logger } from "./logger.js";
 import type { Storage } from "./storage.js";
+import type { TelegramGateway } from "./telegram/gateway.js";
+import { appKeyboard } from "./telegram/bot.js";
+import { T } from "./texts.js";
+import { getProduct } from "./domain/catalog.js";
 
 /**
  * Регулярная уборка:
@@ -40,4 +44,27 @@ export async function cleanup(sql: Sql, storage: Storage, cfg: Config, log: Logg
   for (const p of finished) await storage.remove(`packs/${p.id}/selfie.jpg`).catch(() => {});
 
   if (stale.length || oldPacks.length) log.info({ selfies: stale.length, packs: oldPacks.length }, "уборка завершена");
+}
+
+/**
+ * Одно сообщение через час после бесплатной пробы тем, кто ещё ничего не купил и не делал платных паков.
+ * Окно 1-24 часа: старые пробы не трогаем. Пользователь «забирается» записью события до отправки - повторов не будет.
+ */
+export async function sendTrialFollowups(sql: Sql, tg: TelegramGateway, cfg: Config, log: Logger): Promise<void> {
+  const claimed = await sql<{ user_id: number }[]>`
+    INSERT INTO events (user_id, name)
+    SELECT DISTINCT u.id, 'trial_followup'
+    FROM packs p JOIN users u ON u.id = p.user_id
+    WHERE p.is_free AND p.status = 'ready'
+      AND p.finished_at < now() - interval '1 hour' AND p.finished_at > now() - interval '24 hours'
+      AND u.total_paid_stars = 0 AND u.total_paid_usd = 0 AND u.credits = 0
+      AND u.has_started_bot AND NOT u.bot_blocked AND NOT u.is_banned
+      AND NOT EXISTS (SELECT 1 FROM packs q WHERE q.user_id = u.id AND NOT q.is_free)
+      AND NOT EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'trial_followup')
+    RETURNING user_id`;
+  const more = cfg.STICKERS_PER_PACK - cfg.FREE_PACK_SIZE;
+  for (const { user_id } of claimed) {
+    await tg.sendMessage(user_id, T.trialFollowup(more, cfg.STICKERS_PER_PACK, getProduct("pack_1")?.stars ?? 150), appKeyboard(cfg, "✨ Собрать весь пак", "shop"));
+  }
+  if (claimed.length) log.info({ n: claimed.length }, "напоминания после пробы отправлены");
 }

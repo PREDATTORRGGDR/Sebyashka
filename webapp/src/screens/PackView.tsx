@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from "motion/react";
-import { CircleAlert, Hourglass, Plus, RefreshCw, Send, Share2, Sparkles } from "lucide-react";
+import { CircleAlert, Hourglass, Lock, Plus, RefreshCw, Send, Share2, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, type Pack } from "../api";
 import { useApp } from "../state";
-import { haptic, openTg, share } from "../telegram";
+import { haptic, openTg, payInvoice, share } from "../telegram";
+import { StarsPrice } from "../art";
 import { Button, Glass, ProgressRing, spring, useToast } from "../ui";
 
 const PHRASES = ["Изучаю черты лица…", "Подбираю эмоции…", "Рисую стикеры…", "Вырезаю фон…", "Добавляю обводку…", "Почти готово…"];
@@ -176,6 +177,7 @@ export function PackView({ id }: { id: string }) {
             >
               Добавить в Telegram
             </Button>
+            {pack.isFree && <TrialUpsell pack={pack} heroUrl={hero?.url} />}
             <div className="grid2">
               <Button
                 variant="ghost"
@@ -193,17 +195,6 @@ export function PackView({ id }: { id: string }) {
               </Button>
             </div>
 
-            {pack.isFree && (
-              <Glass className="card col" style={{ gap: 12 }}>
-                <b>Понравилось?</b>
-                <div className="muted small" style={{ lineHeight: 1.45 }}>
-                  В полном паке {me.catalog.packSize} стикеров с разными эмоциями, плюс премиум-стили.
-                </div>
-                <Button icon={<Sparkles size={18} />} onClick={() => go({ name: "create" })}>
-                  Сделать полный пак
-                </Button>
-              </Glass>
-            )}
           </motion.div>
         )}
 
@@ -262,5 +253,73 @@ export function PackView({ id }: { id: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** После бесплатной пробы: какие эмоции ещё закрыты и покупка полного пака в одно касание. */
+function TrialUpsell({ pack, heroUrl }: { pack: Pack; heroUrl?: string }) {
+  const { me, refresh, go } = useApp();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const locked = me.catalog.emotions.slice(pack.stickers.length);
+  const shown = locked.slice(0, 7);
+  const product = me.catalog.products.find((p) => p.id === "pack_1");
+  const hasCredits = me.user.credits > 0;
+
+  useEffect(() => {
+    void api.track("paywall_view", { from: "trial" });
+  }, []);
+
+  async function buy() {
+    if (hasCredits) return go({ name: "create" });
+    if (!product) return go({ name: "shop" });
+    setBusy(true);
+    try {
+      const { url } = await api.order(product.id, "stars");
+      const status = await payInvoice(url);
+      if (status === "paid") {
+        await refresh();
+        toast("Оплачено! Выбирай стиль для полного пака", "ok");
+        go({ name: "create" });
+      } else if (status === "failed") toast("Оплата не прошла", "err");
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Не удалось создать счёт", "err");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!locked.length) return null;
+  return (
+    <Glass className="card col" style={{ gap: 12 }}>
+      <div>
+        <b style={{ fontSize: 18 }}>Ещё {locked.length} эмоций ждут</b>
+        <div className="muted small">
+          Весь пак: {me.catalog.packSize} стикеров с твоим лицом
+        </div>
+      </div>
+      <div className="grid4">
+        {shown.map((t) => (
+          <div key={t} className="sticker-cell locked-cell">
+            {heroUrl && <img src={heroUrl} alt="" />}
+            <Lock size={14} className="lock" />
+            <span>{t}</span>
+          </div>
+        ))}
+        {locked.length > shown.length && (
+          <div className="sticker-cell locked-cell">
+            <b>+{locked.length - shown.length}</b>
+          </div>
+        )}
+      </div>
+      <Button loading={busy} icon={<Sparkles size={18} />} onClick={() => void buy()}>
+        {hasCredits ? "Сделать весь пак" : <>Открыть весь пак · {product ? <StarsPrice value={product.stars} /> : null}</>}
+      </Button>
+      {!hasCredits && (
+        <Button variant="ghost" size="sm" onClick={() => go({ name: "shop" })}>
+          Другие пакеты и оплата криптой
+        </Button>
+      )}
+    </Glass>
   );
 }

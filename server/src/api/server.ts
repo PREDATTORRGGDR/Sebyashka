@@ -9,7 +9,7 @@ import { webhookCallback, type Bot } from "grammy";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import type { Sql } from "../db/client.js";
-import { PRODUCTS, STYLES, WISH_MAX_LEN } from "../domain/catalog.js";
+import { EMOTIONS, PRODUCTS, STYLES, WISH_MAX_LEN } from "../domain/catalog.js";
 import { getOrder, redeemGift } from "../domain/orders.js";
 import { activePackOf, createPack, getPack, listPacks, packStickers, queuePosition, type PackRow } from "../domain/packs.js";
 import { attachReferrer, getUser, isPro, track, upsertUser, type UserRow } from "../domain/users.js";
@@ -191,6 +191,8 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
             products: PRODUCTS,
             freePackSize: cfg.FREE_PACK_SIZE,
             packSize: cfg.STICKERS_PER_PACK,
+            // Названия эмоций пака по порядку: после пробы показываем, какие ещё не открыты.
+            emotions: EMOTIONS.slice(0, cfg.STICKERS_PER_PACK).map((e) => e.title),
             cryptoEnabled: !!d.payments.crypto,
           },
           bot: { username: d.botUsername, support: cfg.SUPPORT_USERNAME },

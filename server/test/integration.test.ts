@@ -6,6 +6,7 @@ import { createOrder, fulfillPayment, redeemGift, refundOrderByCharge } from "..
 import { claimPack, createPack, failPack, getPack, packStickers } from "../src/domain/packs.js";
 import { attachReferrer, getUser, upsertUser, type UserRow } from "../src/domain/users.js";
 import { AppError } from "../src/errors.js";
+import { sendTrialFollowups } from "../src/maintenance.js";
 import { processPack, type PipelineDeps } from "../src/generation/pipeline.js";
 import { normalizeSelfie } from "../src/generation/postprocess.js";
 import { MockGenerator, ProviderConfigError, type ImageGenerator } from "../src/generation/providers.js";
@@ -118,6 +119,24 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
     }
     expect(got).toEqual([false, false, true, false, false, true]);
     expect((await getUser(sql, inviter.id))!.credits).toBe(2);
+  });
+
+  it("напоминание после пробы: через час, один раз, только не купившим", async () => {
+    const trial = async () => {
+      const u = await withSelfie(await newUser());
+      const pack = await createPack(sql, storage, cfg, BOT, { user: u, styleId: "anime", free: true });
+      await sql`UPDATE packs SET status = 'ready', finished_at = now() - interval '2 hours' WHERE id = ${pack.id}`;
+      await sql`UPDATE users SET has_started_bot = TRUE WHERE id = ${u.id}`;
+      return u;
+    };
+    const a = await trial();
+    const b = await trial();
+    await pay(b, "pack_1");
+    const tg = new FakeTelegram();
+    await sendTrialFollowups(sql, tg, cfg, silentLog);
+    await sendTrialFollowups(sql, tg, cfg, silentLog);
+    expect(tg.messages.map((m) => m.userId)).toEqual([a.id]);
+    expect(tg.messages[0]!.text).toContain("150 ⭐");
   });
 
   it("подарок: покупка → код → активация другом один раз", async () => {

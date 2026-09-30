@@ -56,7 +56,7 @@ export interface Me {
   user: User;
   active: Pack | null;
   notices: string[];
-  catalog: { styles: Style[]; products: Product[]; freePackSize: number; packSize: number; cryptoEnabled: boolean; wishMaxLen: number };
+  catalog: { styles: Style[]; products: Product[]; freePackSize: number; packSize: number; emotions: string[]; cryptoEnabled: boolean; wishMaxLen: number };
   bot: { username: string; support: string };
 }
 
