@@ -725,3 +725,51 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .orb, .shimmer, .spin { animation: none; }
 }
+
+/* Магазин: карточка товара целиком кликабельна. */
+.buy-row {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.buy-row:disabled { cursor: default; }
+
+.buy-row .btn { pointer-events: none; flex-shrink: 0; }
+
+/* Стопка стикерпаков вместо цифры. */
+.pack-stack {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.pack-stack span {
+  position: absolute;
+  inset: 5px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--glass-hi);
+  display: grid;
+  place-items: center;
+}
+
+.pack-stack .l2 { transform: rotate(-14deg) translate(-5px, 2px); background: var(--fg-3); border-color: transparent; }
+.pack-stack .l1 { transform: rotate(10deg) translate(5px, 1px); background: var(--fg-2); border-color: transparent; }
+.pack-stack .top { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+.pack-count {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 2px solid var(--bg);
+}

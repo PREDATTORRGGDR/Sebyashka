@@ -1,11 +1,11 @@
 import { motion } from "motion/react";
-import { Bitcoin, Check, Crown, Gem, Gift, Hourglass, Star } from "lucide-react";
+import { Bitcoin, Check, Crown, Gem, Gift, Hourglass, LoaderCircle, Star, Sticker } from "lucide-react";
 import { StarsPrice } from "../art";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, ApiError, type Product } from "../api";
 import { useApp } from "../state";
-import { openTg, payInvoice, share } from "../telegram";
-import { Button, Glass, packsWord, Segment, stagger, useToast } from "../ui";
+import { haptic, openTg, payInvoice, share } from "../telegram";
+import { Glass, packsWord, Segment, stagger, useToast } from "../ui";
 
 type Method = "stars" | "cryptobot";
 
@@ -71,6 +71,32 @@ export function Shop({ reason }: { reason?: string }) {
   const packs = catalog.products.filter((p) => p.kind === "credits");
   const gift = catalog.products.find((p) => p.kind === "gift");
   const price = (p: Product) => (method === "stars" ? <StarsPrice value={p.stars} /> : `$${p.usd}`);
+
+  // Вся карточка - кнопка оплаты; цена справа только метка (кнопка в кнопке недопустима).
+  const buyRow = ({ p, art, ghost, i }: { p: Product; art: ReactNode; ghost?: boolean; i: number }) => (
+    <motion.button
+      key={p.id}
+      className="glass card tight row buy-row"
+      {...stagger(i)}
+      whileTap={busy ? undefined : { scale: 0.98 }}
+      disabled={!!busy}
+      aria-label={`Купить: ${p.title}`}
+      onClick={() => {
+        haptic.tap();
+        void buy(p);
+      }}
+    >
+      {art}
+      <div className="grow">
+        <div className="row" style={{ gap: 8 }}>
+          <b>{p.title}</b>
+          {p.badge && <span className="badge">{p.badge}</span>}
+        </div>
+        <div className="faint small">{p.description}</div>
+      </div>
+      <span className={`btn sm ${ghost ? "ghost" : "primary"}`}>{busy === p.id ? <LoaderCircle size={18} className="spin" /> : price(p)}</span>
+    </motion.button>
+  );
 
   return (
     <div className="screen">
@@ -143,43 +169,43 @@ export function Shop({ reason }: { reason?: string }) {
 
       <div className="col" style={{ gap: 10 }}>
         {packs.map((p, i) => (
-          <Glass key={p.id} className="card tight row" {...stagger(i + 2)}>
-            <div className="glass" style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center", fontWeight: 700 }}>
-              {p.credits}
-            </div>
-            <div className="grow">
-              <div className="row" style={{ gap: 8 }}>
-                <b>{p.title}</b>
-                {p.badge && <span className="badge">{p.badge}</span>}
-              </div>
-              <div className="faint small">{p.description}</div>
-            </div>
-            <Button size="sm" loading={busy === p.id} onClick={() => void buy(p)}>
-              {price(p)}
-            </Button>
-          </Glass>
+          buyRow({ p, i: i + 2, art: <PackStack n={p.credits} /> })
         ))}
       </div>
 
-      {gift && (
-        <Glass className="card tight row" {...stagger(6)}>
-          <div className="glass" style={{ width: 48, height: 48, borderRadius: 16, display: "grid", placeItems: "center" }}>
-            <Gift size={22} />
-          </div>
-          <div className="grow">
-            <b>{gift.title}</b>
-            <div className="faint small">{gift.description}</div>
-          </div>
-          <Button variant="ghost" size="sm" loading={busy === gift.id} onClick={() => void buy(gift)}>
-            {price(gift)}
-          </Button>
-        </Glass>
-      )}
+      {gift &&
+        buyRow({
+          p: gift,
+          i: 6,
+          ghost: true,
+          art: (
+            <div className="pack-stack" aria-hidden>
+              <span className="top">
+                <Gift size={22} />
+              </span>
+            </div>
+          ),
+        })}
 
       <div className="faint small center" style={{ lineHeight: 1.5, padding: "0 12px" }}>
         Оплата через Telegram Stars или @CryptoBot (USDT, TON, BTC и др.). Если пак не собрался - паки возвращаются автоматически.
         Вопросы по оплате: /paysupport в боте.
       </div>
+    </div>
+  );
+}
+
+/** Стопка стикерпаков: число листов растёт с количеством паков, у больших пакетов метка ×N. */
+function PackStack({ n }: { n: number }) {
+  const layers = Math.min(n, 3);
+  return (
+    <div className="pack-stack" aria-hidden>
+      {layers >= 3 && <span className="l2" />}
+      {layers >= 2 && <span className="l1" />}
+      <span className="top">
+        <Sticker size={22} />
+      </span>
+      {n > 1 && <b className="pack-count">×{n}</b>}
     </div>
   );
 }
