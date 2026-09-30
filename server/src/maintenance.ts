@@ -64,7 +64,7 @@ export async function sendTrialFollowups(sql: Sql, tg: TelegramGateway, cfg: Con
     RETURNING user_id`;
   const more = cfg.STICKERS_PER_PACK - cfg.FREE_PACK_SIZE;
   for (const { user_id } of claimed) {
-    await tg.sendMessage(user_id, T.trialFollowup(more, cfg.STICKERS_PER_PACK, getProduct("pack_1")?.stars ?? 150), appKeyboard(cfg, "✨ Собрать весь пак", "shop"));
+    await tg.sendMessage(user_id, T.trialFollowup(more, cfg.STICKERS_PER_PACK, getProduct("pack_1")?.stars ?? 250), appKeyboard(cfg, "✨ Собрать весь пак", "shop"));
   }
   if (claimed.length) log.info({ n: claimed.length }, "напоминания после пробы отправлены");
 }

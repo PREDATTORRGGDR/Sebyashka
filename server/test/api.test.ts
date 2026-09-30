@@ -201,7 +201,7 @@ describe.skipIf(!TEST_DB)("HTTP API, админка, CryptoBot, бот", () => {
       expect(url).toContain("CryptoBot");
 
       const update = JSON.stringify({ update_id: 1, update_type: "invoice_paid", request_date: new Date().toISOString(),
-        payload: { invoice_id: 777, hash: "h", status: "paid", bot_invoice_url: "", amount: "4.99", payload: orderId, paid_asset: "USDT", paid_amount: "4.99" } });
+        payload: { invoice_id: 777, hash: "h", status: "paid", bot_invoice_url: "", amount: "8.49", payload: orderId, paid_asset: "USDT", paid_amount: "8.49" } });
       const sig = createHmac("sha256", createHash("sha256").update(CRYPTO_TOKEN).digest()).update(update).digest("hex");
 
       const forged = await app.inject({ method: "POST", url: "/cryptobot/webhook", payload: update, headers: { "content-type": "application/json", "crypto-pay-api-signature": "0".repeat(64) } });

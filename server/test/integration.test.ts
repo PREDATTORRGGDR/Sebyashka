@@ -136,7 +136,7 @@ describe.skipIf(!TEST_DB)("интеграция с Postgres", () => {
     await sendTrialFollowups(sql, tg, cfg, silentLog);
     await sendTrialFollowups(sql, tg, cfg, silentLog);
     expect(tg.messages.map((m) => m.userId)).toEqual([a.id]);
-    expect(tg.messages[0]!.text).toContain("150 ⭐");
+    expect(tg.messages[0]!.text).toContain("250 ⭐");
   });
 
   it("подарок: покупка → код → активация другом один раз", async () => {
