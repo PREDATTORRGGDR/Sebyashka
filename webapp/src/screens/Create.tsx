@@ -55,7 +55,7 @@ export function Create() {
   const { me, refresh, go } = useApp();
   const toast = useToast();
   const { user, catalog } = me;
-  const [step, setStep] = useState<Step>(user.hasSelfie ? "style" : "photo");
+  const [step, setStep] = useState<Step>("photo");
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [styleId, setStyleId] = useState<string>(catalog.styles[0]?.id ?? "");
@@ -161,6 +161,11 @@ export function Create() {
             <Button loading={uploading} icon={<Camera size={20} />} onClick={() => fileRef.current?.click()}>
               Загрузить фото
             </Button>
+            {user.hasSelfie && !uploading && (
+              <Button variant="ghost" icon={<Check size={18} />} onClick={() => setStep("style")}>
+                Взять прошлое фото
+              </Button>
+            )}
             <div className="faint small center">Чужие фото - только с согласия человека</div>
           </motion.div>
         ) : step === "preview" ? (

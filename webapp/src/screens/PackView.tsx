@@ -8,11 +8,17 @@ import { Button, Glass, ProgressRing, spring, useToast } from "../ui";
 
 const PHRASES = ["Изучаю черты лица…", "Подбираю эмоции…", "Рисую стикеры…", "Вырезаю фон…", "Добавляю обводку…", "Почти готово…"];
 
+function stickersWord(n: number): string {
+  const d = n % 10, h = n % 100;
+  return d === 1 && h !== 11 ? "стикер" : d >= 2 && d <= 4 && (h < 12 || h > 14) ? "стикера" : "стикеров";
+}
+
 export function PackView({ id }: { id: string }) {
   const { me, refresh, go } = useApp();
   const toast = useToast();
   const [pack, setPack] = useState<Pack | null>(null);
   const [phrase, setPhrase] = useState(0);
+  const [heroIdx, setHeroIdx] = useState(0);
   const prevStatus = useRef<string | null>(null);
 
   useEffect(() => {
@@ -65,6 +71,7 @@ export function PackView({ id }: { id: string }) {
   }
 
   const inProgress = pack.status === "queued" || pack.status === "processing";
+  const hero = pack.stickers.find((s) => s.idx === heroIdx) ?? pack.stickers[0];
   const botLink = `https://t.me/${me.bot.username}`;
 
   return (
@@ -118,7 +125,48 @@ export function PackView({ id }: { id: string }) {
         )}
 
         {pack.status === "ready" && (
-          <motion.div key="ready" className="col" style={{ gap: 12 }} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={spring}>
+          <motion.div key="ready" className="col" style={{ gap: 14 }} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={spring}>
+            {hero && (
+              <Glass className="card showcase">
+                <div className="sticker-float">
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={hero.idx}
+                      src={hero.url}
+                      alt={hero.emoji}
+                      className="showcase-img"
+                      initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                    />
+                  </AnimatePresence>
+                </div>
+                <div className="muted small">
+                  {pack.stickers.length} {stickersWord(pack.stickers.length)} · {pack.styleTitle}
+                </div>
+              </Glass>
+            )}
+
+            <div className="grid4">
+              {pack.stickers.map((s, i) => (
+                <motion.button
+                  key={s.idx}
+                  className={`sticker-cell pick ${s.idx === hero?.idx ? "selected" : ""}`}
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ ...spring, delay: Math.min(i, 16) * 0.035 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => {
+                    haptic.select();
+                    setHeroIdx(s.idx);
+                  }}
+                >
+                  <img src={s.url} alt={s.emoji} />
+                </motion.button>
+              ))}
+            </div>
+
             <Button
               icon={<Plus size={20} />}
               onClick={() => {
@@ -143,6 +191,18 @@ export function PackView({ id }: { id: string }) {
                 Ещё стиль
               </Button>
             </div>
+
+            {pack.isFree && (
+              <Glass className="card col" style={{ gap: 12 }}>
+                <b>Понравилось?</b>
+                <div className="muted small" style={{ lineHeight: 1.45 }}>
+                  В полном паке {me.catalog.packSize} стикеров с разными эмоциями, плюс премиум-стили.
+                </div>
+                <Button icon={<Sparkles size={18} />} onClick={() => go({ name: "create" })}>
+                  Сделать полный пак
+                </Button>
+              </Glass>
+            )}
           </motion.div>
         )}
 
@@ -178,7 +238,7 @@ export function PackView({ id }: { id: string }) {
         )}
       </AnimatePresence>
 
-      {(pack.stickers.length > 0 || inProgress) && (
+      {pack.status !== "ready" && (pack.stickers.length > 0 || inProgress) && (
         <div className="grid4">
           {Array.from({ length: pack.total }, (_, i) => {
             const s = pack.stickers.find((x) => x.idx === i);

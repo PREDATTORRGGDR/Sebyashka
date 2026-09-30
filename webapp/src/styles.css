@@ -355,6 +355,7 @@ img {
 }
 
 .sticker-cell {
+  position: relative;
   aspect-ratio: 1;
   border-radius: 18px;
   display: grid;
@@ -364,11 +365,67 @@ img {
   border: 1px solid var(--glass-border);
 }
 
+/* absolute: в <button> высота 90% не считается от ячейки, и картинка вылезала вниз. */
 .sticker-cell img {
+  position: absolute;
+  inset: 5%;
   width: 90%;
   height: 90%;
   object-fit: contain;
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+/* Экран готового пака: крупный стикер сверху, по тапу на сетку он меняется. */
+.showcase {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 22px 16px 16px;
+  overflow: hidden;
+}
+
+.showcase::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at 50% 38%, var(--glass-strong), transparent 55%);
+  pointer-events: none;
+}
+
+.showcase-img {
+  position: relative;
+  display: block;
+  width: min(62vw, 240px);
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
+}
+
+.sticker-float {
+  animation: sticker-float 3.2s ease-in-out infinite;
+}
+
+@keyframes sticker-float {
+  50% { transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker-float { animation: none; }
+}
+
+.sticker-cell.pick {
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.sticker-cell.selected {
+  border-color: var(--accent);
+  background: var(--glass-strong);
 }
 
 .sticker-cell.placeholder {
