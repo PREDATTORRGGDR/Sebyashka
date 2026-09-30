@@ -25,7 +25,7 @@ export function appUrl(cfg: Config, screen?: string): string {
   return screen ? `${cfg.WEBAPP_URL}?screen=${encodeURIComponent(screen)}` : cfg.WEBAPP_URL;
 }
 
-/** Бот — только вход в приложение: у каждого сообщения одна кнопка «Открыть». */
+/** Бот - только вход в приложение: у каждого сообщения одна кнопка «Открыть». */
 export function appKeyboard(cfg: Config, text = T.openApp, screen?: string): InlineKeyboard {
   return new InlineKeyboard().webApp(text, appUrl(cfg, screen));
 }
@@ -51,9 +51,10 @@ export function setupBot(bot: Bot, d: BotDeps): void {
       d.notifier?.notify(
         "new_user",
         `👤 <b>Новый пользователь</b> (бот)\n${who(user)}` +
-          (referrer ? ` · по приглашению <code>${referrer}</code>` : param.gift ? " · по подарку" : ctx.match ? ` · метка ${esc(ctx.match.slice(0, 40))}` : " · органика"),
+          (referrer ? ` · по приглашению <code>${referrer.referrerId}</code>` : param.gift ? " · по подарку" : ctx.match ? ` · метка ${esc(ctx.match.slice(0, 40))}` : " · органика"),
       );
     }
+    if (referrer?.rewarded) await ctx.api.sendMessage(referrer.referrerId, T.inviteReward(), { parse_mode: "HTML", reply_markup: appKeyboard(cfg, "Открыть") }).catch(() => {});
     if (ctx.match === "terms") return void (await ctx.reply(T.terms(d.botUsername), { parse_mode: "HTML", reply_markup: appKeyboard(cfg) }));
     await ctx.reply(T.welcome(ctx.from.first_name), { parse_mode: "HTML", reply_markup: appKeyboard(cfg) });
     if (param.gift) {
@@ -64,9 +65,9 @@ export function setupBot(bot: Bot, d: BotDeps): void {
         await ctx.reply(T.giftError(e instanceof AppError ? e.message : "Не удалось активировать подарок"));
       }
     }
-    // Паки, которые ждали /start, — отправляем в очередь.
+    // Паки, которые ждали /start, - отправляем в очередь.
     const n = await requeueNeedsStart(sql, user.id);
-    if (n) await ctx.reply(`⏳ Собираю твои паки (${n}) — следи в приложении.`, { reply_markup: appKeyboard(cfg, "Открыть") });
+    if (n) await ctx.reply(`⏳ Собираю твои паки (${n}) - следи в приложении.`, { reply_markup: appKeyboard(cfg, "Открыть") });
   });
 
   bot.command("terms", (ctx) => ctx.reply(T.terms(d.botUsername), { parse_mode: "HTML", reply_markup: appKeyboard(cfg) }));
@@ -99,7 +100,7 @@ export function setupBot(bot: Bot, d: BotDeps): void {
         raw: p,
       });
     } catch (e) {
-      // Деньги списаны, а зачислить не смогли — критично: логируем и зовём админов.
+      // Деньги списаны, а зачислить не смогли - критично: логируем и зовём админов.
       log.error({ err: (e as Error).message, charge: p.telegram_payment_charge_id }, "НЕ ЗАЧИСЛЕНА ОПЛАТА STARS");
       await ctx.reply(`Оплата получена, но зачисление задержалось. Мы уже разбираемся. Код: ${p.telegram_payment_charge_id}`);
       d.notifier?.notify(
@@ -132,8 +133,8 @@ export function setupBot(bot: Bot, d: BotDeps): void {
         `   Stars: ${st.starsTotal} ⭐ · крипта: $${st.usdTotal}\n\n` +
         `<b>Воронка за 7 дней</b>\n` +
         funnel.map((f) => `${f.label}: ${f.users} (${Math.round((f.users / top) * 100)}%)`).join("\n") +
-        `\n\n<b>Команды</b>\n/user &lt;id|@username&gt; — карточка\n/grant &lt;id&gt; &lt;±n&gt; — паки\n/refund &lt;charge_id&gt; — возврат Stars\n` +
-        `/ban &lt;id&gt; [off] — бан\n/alerts — какие уведомления присылать\n\nПолная панель — в приложении, вкладка «Админ».`,
+        `\n\n<b>Команды</b>\n/user &lt;id|@username&gt; - карточка\n/grant &lt;id&gt; &lt;±n&gt; - паки\n/refund &lt;charge_id&gt; - возврат Stars\n` +
+        `/ban &lt;id&gt; [off] - бан\n/alerts - какие уведомления присылать\n\nПолная панель - в приложении, вкладка «Админ».`,
       { parse_mode: "HTML", reply_markup: appKeyboard(cfg, "Открыть админку", "admin") },
     );
   });
@@ -214,13 +215,13 @@ export function setupBot(bot: Bot, d: BotDeps): void {
     await ctx.reply(
       `${who(u)}\nпаков на балансе: <b>${c.credits}</b> · Pro: ${c.isPro ? "да" : "нет"} · бесплатный использован: ${c.freePackUsed ? "да" : "нет"}\n` +
         `паков создано: ${c.packs} (готово ${c.packsReady}) · оплат: ${c.orders}\n` +
-        `оплачено: ${c.paidStars} ⭐ / $${c.paidUsd} · реферер: ${c.referredBy ?? "—"} · бан: ${c.isBanned ? "да" : "нет"}\n` +
+        `оплачено: ${c.paidStars} ⭐ / $${c.paidUsd} · реферер: ${c.referredBy ?? "-"} · бан: ${c.isBanned ? "да" : "нет"}\n` +
         (c.lastCharges.length ? `\nПоследние платежи (для /refund):\n` + c.lastCharges.map((x) => `<code>${esc(x.chargeId)}</code> ${x.productId}`).join("\n") : ""),
       { parse_mode: "HTML" },
     );
   });
 
-  // Всё остальное (текст, фото, стикеры, голосовые) — ведём в приложение.
+  // Всё остальное (текст, фото, стикеры, голосовые) - ведём в приложение.
   bot.on("message", (ctx) => ctx.reply(T.onlyApp, { reply_markup: appKeyboard(cfg) }));
 
   bot.catch((err) => {
@@ -239,7 +240,7 @@ export async function configureBotProfile(bot: Bot, cfg: Config, log: Logger): P
     if (cfg.WEBAPP_URL.startsWith("https://")) {
       await bot.api.setChatMenuButton({ menu_button: { type: "web_app", text: "Стикеры", web_app: { url: cfg.WEBAPP_URL } } });
     } else {
-      log.warn("WEBAPP_URL не https — кнопка меню мини-приложения не установлена (Telegram требует https)");
+      log.warn("WEBAPP_URL не https - кнопка меню мини-приложения не установлена (Telegram требует https)");
     }
   } catch (e) {
     log.warn({ err: (e as Error).message }, "не удалось настроить профиль бота");

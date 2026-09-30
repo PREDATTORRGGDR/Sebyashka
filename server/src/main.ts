@@ -35,11 +35,11 @@ async function main() {
       const me = await payments.crypto.getMe();
       log.info({ app: me.name }, "CryptoBot подключён");
     } catch (e) {
-      log.error({ err: (e as Error).message }, "CryptoBot: токен не работает — крипто-оплата будет падать");
+      log.error({ err: (e as Error).message }, "CryptoBot: токен не работает - крипто-оплата будет падать");
     }
   }
 
-  // Системные алерты (сломался провайдер ИИ и т.п.) — не чаще раза в 10 минут, чтобы не заспамить.
+  // Системные алерты (сломался провайдер ИИ и т.п.) - не чаще раза в 10 минут, чтобы не заспамить.
   let lastAlert = 0;
   const alert = (msg: string) => {
     if (Date.now() - lastAlert < 10 * 60_000) return;
@@ -58,7 +58,7 @@ async function main() {
     server = await buildServer({ sql, cfg, log, storage, signer, payments, bot, botUsername, notifier });
     await server.listen({ port: cfg.PORT, host: cfg.HOST });
 
-    const allowed_updates = ["message", "pre_checkout_query", "callback_query"] as const; // callback_query — кнопки /alerts
+    const allowed_updates = ["message", "pre_checkout_query", "callback_query"] as const; // callback_query - кнопки /alerts
     if (cfg.BOT_MODE === "webhook") {
       await bot.api.setWebhook(`${cfg.PUBLIC_URL}/telegram/webhook`, {
         secret_token: cfg.TELEGRAM_WEBHOOK_SECRET,

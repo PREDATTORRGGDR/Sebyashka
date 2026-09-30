@@ -51,7 +51,7 @@ async function mapLimit<T>(items: T[], limit: number, fn: (x: T) => Promise<void
 export async function processPack(d: PipelineDeps, pack: PackRow, signal?: AbortSignal): Promise<ProcessOutcome> {
   const log = d.log.child({ pack: pack.id, user: pack.user_id });
   if (pack.attempts > MAX_PACK_ATTEMPTS) {
-    return fail(d, pack, `превышено число попыток (${pack.attempts - 1}); последняя ошибка: ${pack.error ?? "—"}`);
+    return fail(d, pack, `превышено число попыток (${pack.attempts - 1}); последняя ошибка: ${pack.error ?? "-"}`);
   }
   const style = getStyle(pack.style_id);
   if (!style) return fail(d, pack, `стиль ${pack.style_id} удалён из каталога`);
@@ -86,7 +86,7 @@ export async function processPack(d: PipelineDeps, pack: PackRow, signal?: Abort
   }
 
   if (configError) {
-    // Ключ/модель/баланс провайдера — вина не пользователя. Ставим обратно в очередь и зовём админа.
+    // Ключ/модель/баланс провайдера - вина не пользователя. Ставим обратно в очередь и зовём админа.
     const msg = `провайдер ИИ: ${(configError as Error).message}`;
     log.error(msg);
     d.alert?.(`⚠️ Генерация остановлена: ${msg}`);
@@ -145,7 +145,7 @@ async function generateOne(
           removeBg = false;
         } catch (e) {
           if (e instanceof ProviderConfigError) throw e;
-          removeBg = true; // нейросеть фона упала — вырежем локально
+          removeBg = true; // нейросеть фона упала - вырежем локально
         }
       }
       const out = await toSticker(img, { removeBackground: removeBg });
@@ -188,7 +188,7 @@ async function upload(d: PipelineDeps, pack: PackRow, done: StickerRow[]): Promi
       return "needs_start";
     }
     if (c.kind === "set_exists") {
-      // Имя занято, но getStickerSet его не видит — редкая гонка. Повторим позже.
+      // Имя занято, но getStickerSet его не видит - редкая гонка. Повторим позже.
       await requeue(d.sql, pack.id, c.description);
       return "requeued";
     }

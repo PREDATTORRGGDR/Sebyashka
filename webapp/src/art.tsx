@@ -1,11 +1,11 @@
 /**
- * Векторные иллюстрации интерфейса: монохромные SVG + стекло. Без эмодзи и растровых картинок —
+ * Векторные иллюстрации интерфейса: монохромные SVG + стекло. Без эмодзи и растровых картинок -
  * одинаково чётко на любом экране, наследуют цвет темы (currentColor / CSS-переменные).
  */
 import { motion } from "motion/react";
 import { CloudOff, Crown, Heart, ImagePlus, Sparkles, Star, Zap, type LucideIcon } from "lucide-react";
 
-/** Линейный портрет — фирменный знак «Себяшки». */
+/** Линейный портрет - фирменный знак «Себяшки». */
 export function FaceMark({ size = 72, scan = false }: { size?: number; scan?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

@@ -18,7 +18,7 @@
 		max_size 25MB
 	}
 
-	reverse_proxy app:3000 {
+	reverse_proxy api:3000 {
 		health_uri /health
 		health_interval 15s
 	}

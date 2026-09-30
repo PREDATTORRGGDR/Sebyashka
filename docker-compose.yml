@@ -1,6 +1,8 @@
 # Прод-стек на одном VPS: Caddy (HTTPS) → app (API + бот) и worker (генерация) → Postgres.
 # Запуск: docker compose up -d --build   (подробно — DEPLOY.md)
 
+name: sebyashka
+
 services:
   db:
     image: postgres:16-alpine
@@ -17,15 +19,20 @@ services:
       timeout: 5s
       retries: 20
     # Порт наружу не публикуем — база доступна только контейнерам.
+    # Уникальное имя: app сидит и в сети LooksmaxBot, где тоже есть "db".
+    networks:
+      default:
+        aliases: [sebyashka-db]
 
-  app:
+  # Не "app": сервис подключён к сети LooksmaxBot, где "app" уже занят их контейнером.
+  api:
     build: .
     image: sebyashka:latest
     restart: unless-stopped
     env_file: .env
     environment:
       ROLE: api
-      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sebyashka}
+      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@sebyashka-db:5432/${POSTGRES_DB:-sebyashka}
     volumes:
       - appdata:/data
     depends_on:
@@ -33,6 +40,8 @@ services:
         condition: service_healthy
     expose:
       - "3000"
+    # Сеть LooksmaxBot: их Caddy проксирует к нам sebyashka.144-31-166-57.sslip.io
+    networks: [default, looksmax]
 
   worker:
     build: .
@@ -41,17 +50,21 @@ services:
     env_file: .env
     environment:
       ROLE: worker
-      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sebyashka}
+      DATABASE_URL: postgres://${POSTGRES_USER:-sebyashka}:${POSTGRES_PASSWORD}@sebyashka-db:5432/${POSTGRES_DB:-sebyashka}
     volumes:
       - appdata:/data
     depends_on:
       db:
         condition: service_healthy
-      app:
+      api:
         condition: service_started
+    healthcheck:
+      disable: true  # у воркера нет HTTP, /health из Dockerfile не для него
     # Масштабирование генерации: docker compose up -d --scale worker=3
 
   caddy:
+    # Выключен по умолчанию: 80/443 на сервере заняты другим проектом. Включить: --profile https
+    profiles: ["https"]
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
@@ -59,14 +72,19 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
-      DOMAIN: ${DOMAIN:?задай DOMAIN в .env}
+      DOMAIN: ${DOMAIN:-}
       ACME_EMAIL: ${ACME_EMAIL:-}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - app
+      - api
+
+networks:
+  looksmax:
+    external: true
+    name: looksmaxbot_appnet
 
 volumes:
   pgdata:

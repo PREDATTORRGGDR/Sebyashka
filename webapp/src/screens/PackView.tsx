@@ -109,7 +109,7 @@ export function PackView({ id }: { id: string }) {
                 </motion.div>
               </AnimatePresence>
               <div className="faint small" style={{ marginTop: 6 }}>
-                Можно закрыть приложение — пришлю, когда будет готово
+                Можно закрыть приложение - пришлю, когда будет готово
               </div>
             </Glass>
           </motion.div>
@@ -148,7 +148,7 @@ export function PackView({ id }: { id: string }) {
           <motion.div key="start" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Glass className="card col" style={{ gap: 14 }}>
               <div className="muted" style={{ lineHeight: 1.45 }}>
-                Стикеры готовы, но Telegram разрешает создать пак только после того, как ты запустишь бота. Нажми кнопку, затем «Start» —
+                Стикеры готовы, но Telegram разрешает создать пак только после того, как ты запустишь бота. Нажми кнопку, затем «Start» -
                 и пак появится автоматически.
               </div>
               <Button icon={<Send size={18} />} onClick={() => openTg(`${botLink}?start=go`)}>

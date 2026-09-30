@@ -28,7 +28,7 @@ export function Shop({ reason }: { reason?: string }) {
     toast(`Оплачено: ${product.title}`, "ok");
     if (product.kind === "gift" && orderId) {
       const st = await api.orderStatus(orderId).catch(() => null);
-      if (st?.giftLink) share(st.giftLink, "Дарю тебе стикерпак — сделай из любого фото 🎁");
+      if (st?.giftLink) share(st.giftLink, "Дарю тебе стикерпак - сделай из любого фото 🎁");
     }
   }
 
@@ -41,7 +41,7 @@ export function Shop({ reason }: { reason?: string }) {
       }
       if (st?.status === "expired" || Date.now() - startedAt > 20 * 60_000) {
         setWaitingCrypto(null);
-        return toast("Счёт истёк — создай новый", "info");
+        return toast("Счёт истёк - создай новый", "info");
       }
       pollCrypto(orderId, product, startedAt);
     }, 3000);
@@ -83,7 +83,7 @@ export function Shop({ reason }: { reason?: string }) {
 
       {reason === "credits" && (
         <Glass className="card tight small muted" {...stagger(0)}>
-          Не хватает паков на балансе — выбери пакет ниже, и стикеры начнут собираться сразу после оплаты.
+          Не хватает паков на балансе - выбери пакет ниже, и стикеры начнут собираться сразу после оплаты.
         </Glass>
       )}
 
@@ -102,7 +102,7 @@ export function Shop({ reason }: { reason?: string }) {
       {waitingCrypto && (
         <Glass className="card tight row" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
           <Hourglass size={18} className="spin" style={{ flexShrink: 0 }} />
-          <span className="small">Жду оплату в @CryptoBot. После оплаты вернись сюда — паки начислятся автоматически.</span>
+          <span className="small">Жду оплату в @CryptoBot. После оплаты вернись сюда - паки начислятся автоматически.</span>
         </Glass>
       )}
 
@@ -177,7 +177,7 @@ export function Shop({ reason }: { reason?: string }) {
       )}
 
       <div className="faint small center" style={{ lineHeight: 1.5, padding: "0 12px" }}>
-        Оплата через Telegram Stars или @CryptoBot (USDT, TON, BTC и др.). Если пак не собрался — паки возвращаются автоматически.
+        Оплата через Telegram Stars или @CryptoBot (USDT, TON, BTC и др.). Если пак не собрался - паки возвращаются автоматически.
         Вопросы по оплате: /paysupport в боте.
       </div>
     </div>

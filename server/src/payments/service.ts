@@ -37,7 +37,7 @@ export class PaymentService {
     this.crypto = cfg.CRYPTOBOT_TOKEN ? new CryptoBotClient(cfg.CRYPTOBOT_TOKEN, cfg.CRYPTOBOT_NETWORK, cfg.CRYPTOBOT_ASSETS) : null;
   }
 
-  /** Payload инвойса Stars: только id заказа (лимит Telegram — 128 байт). */
+  /** Payload инвойса Stars: только id заказа (лимит Telegram - 128 байт). */
   static starsPayload(orderId: string): string {
     return `o:${orderId}`;
   }
@@ -89,7 +89,7 @@ export class PaymentService {
     try {
       inv = await this.crypto!.createInvoice({
         usd: product.usd,
-        description: `${product.title} — ${product.description}`,
+        description: `${product.title} - ${product.description}`,
         payload: order.id,
         returnUrl: `https://t.me/${this.botUsername}?startapp=paid`,
       });
@@ -151,7 +151,7 @@ export class PaymentService {
       return null;
     }
     if (order.provider_invoice_id && order.provider_invoice_id !== String(inv.invoice_id)) {
-      this.log.error({ invoice: inv.invoice_id, order: order.id }, "invoice_id не совпадает с заказом — подозрение на подмену");
+      this.log.error({ invoice: inv.invoice_id, order: order.id }, "invoice_id не совпадает с заказом - подозрение на подмену");
       return null;
     }
     const ev: PaymentEvent = {

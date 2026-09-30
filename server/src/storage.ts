@@ -2,7 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, rename, rm, stat, writeFile, copyFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
-/** Локальное файловое хранилище. Все пути — относительные к DATA_DIR и строятся только из наших id. */
+/** Локальное файловое хранилище. Все пути - относительные к DATA_DIR и строятся только из наших id. */
 export class Storage {
   readonly root: string;
   constructor(dataDir: string) {

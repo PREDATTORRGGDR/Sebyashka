@@ -1,4 +1,4 @@
-/** Минимальная типизация Telegram.WebApp — только то, что используем. */
+/** Минимальная типизация Telegram.WebApp - только то, что используем. */
 type InvoiceStatus = "paid" | "cancelled" | "failed" | "pending";
 
 interface TgButton {

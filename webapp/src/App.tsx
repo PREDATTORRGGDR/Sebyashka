@@ -42,7 +42,7 @@ export function App() {
 
   useEffect(() => {
     void refresh().then((d) => d?.notices.forEach((n) => toast(n, "ok")));
-    // Вернулись в приложение (например, после оплаты в @CryptoBot) — обновим баланс.
+    // Вернулись в приложение (например, после оплаты в @CryptoBot) - обновим баланс.
     const onVisible = () => document.visibilityState === "visible" && void refresh();
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);

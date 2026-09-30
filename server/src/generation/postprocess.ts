@@ -25,7 +25,7 @@ function fromRaw(r: Raw) {
   return sharp(r.data, { raw: { width: r.width, height: r.height, channels: 4 } });
 }
 
-/** Доля полностью непрозрачных пикселей. Если фон уже прозрачный — вырезать его не нужно. */
+/** Доля полностью непрозрачных пикселей. Если фон уже прозрачный - вырезать его не нужно. */
 export function opaqueRatio(r: Raw): number {
   let opaque = 0;
   const total = r.width * r.height;
@@ -40,7 +40,7 @@ export function opaqueRatio(r: Raw): number {
 export function removeFlatBackground(r: Raw, tolerance = 42): Raw {
   const { width: w, height: h } = r;
   const data = Buffer.from(r.data);
-  // Цвет фона — медиана пикселей рамки.
+  // Цвет фона - медиана пикселей рамки.
   const border: number[][] = [];
   for (let x = 0; x < w; x++) border.push(px(data, w, x, 0), px(data, w, x, h - 1));
   for (let y = 0; y < h; y++) border.push(px(data, w, 0, y), px(data, w, w - 1, y));
@@ -92,7 +92,7 @@ function median(xs: number[]): number {
   return s[Math.floor(s.length / 2)] ?? 255;
 }
 
-/** Рамка непрозрачного содержимого. null — картинка пустая. */
+/** Рамка непрозрачного содержимого. null - картинка пустая. */
 export function alphaBBox(r: Raw, threshold = 16): { left: number; top: number; width: number; height: number } | null {
   let minX = r.width,
     minY = r.height,
@@ -113,7 +113,7 @@ export function alphaBBox(r: Raw, threshold = 16): { left: number; top: number; 
 }
 
 export interface PostprocessOptions {
-  /** Вырезать однотонный фон локально. false — если фон уже удалён нейросетью. */
+  /** Вырезать однотонный фон локально. false - если фон уже удалён нейросетью. */
   removeBackground: boolean;
 }
 
@@ -128,7 +128,7 @@ export async function toSticker(input: Buffer, opts: PostprocessOptions): Promis
     const cut = removeFlatBackground(raw);
     const box = alphaBBox(cut);
     const area = box ? (box.width * box.height) / (raw.width * raw.height) : 0;
-    // Если заливка «съела» персонажа (фон не однотонный) — оставляем как есть, но скругляем углы.
+    // Если заливка «съела» персонажа (фон не однотонный) - оставляем как есть, но скругляем углы.
     raw = box && area > 0.05 && opaqueRatio(cut) > 0.03 ? cut : await roundCorners(raw);
   }
 
@@ -148,7 +148,7 @@ export async function toSticker(input: Buffer, opts: PostprocessOptions): Promis
     .png()
     .toBuffer();
 
-  // Обводка: размываем альфу и режем порогом — получаем «раздутый» силуэт.
+  // Обводка: размываем альфу и режем порогом - получаем «раздутый» силуэт.
   const outlineAlpha = await sharp(padded).extractChannel("alpha").blur(5).threshold(6).raw().toBuffer();
   const outline = await sharp({ create: { width: W, height: H, channels: 3, background: { r: 255, g: 255, b: 255 } } })
     .joinChannel(outlineAlpha, { raw: { width: W, height: H, channels: 1 } })

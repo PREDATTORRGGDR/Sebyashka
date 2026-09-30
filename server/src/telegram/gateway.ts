@@ -6,7 +6,7 @@ export interface StickerFile {
   emoji: string;
 }
 
-/** Всё, что пайплайну нужно от Telegram. Интерфейс — чтобы тестировать без сети. */
+/** Всё, что пайплайну нужно от Telegram. Интерфейс - чтобы тестировать без сети. */
 export interface TelegramGateway {
   createStickerSet(userId: number, name: string, title: string, stickers: StickerFile[]): Promise<void>;
   addSticker(userId: number, name: string, sticker: StickerFile): Promise<void>;

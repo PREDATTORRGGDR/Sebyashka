@@ -88,7 +88,7 @@ export function Create() {
     if (!style) return;
     if (!admin && !useFree && user.credits < cost) {
       void api.track("paywall_view", { from: "create", style: style.id });
-      toast(`Нужно ${packsWord(cost)} — пополни баланс`, "info");
+      toast(`Нужно ${packsWord(cost)} - пополни баланс`, "info");
       return go({ name: "shop", reason: "credits" });
     }
     setCreating(true);
@@ -156,7 +156,7 @@ export function Create() {
             <Button loading={uploading} icon={<Camera size={20} />} onClick={() => fileRef.current?.click()}>
               Загрузить фото
             </Button>
-            <div className="faint small center">Чужие фото — только с согласия человека</div>
+            <div className="faint small center">Чужие фото - только с согласия человека</div>
           </motion.div>
         ) : (
           <motion.div key="style" className="col" style={{ gap: 16 }} {...pageMotion}>
@@ -251,7 +251,7 @@ export function Create() {
                 </div>
               )}
               {!admin && user.freePackAvailable && style?.premium && (
-                <div className="faint small">Бесплатный мини-пак доступен в обычных стилях. Премиум — за паки с баланса.</div>
+                <div className="faint small">Бесплатный мини-пак доступен в обычных стилях. Премиум - за паки с баланса.</div>
               )}
             </Glass>
 

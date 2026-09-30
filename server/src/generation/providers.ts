@@ -9,7 +9,7 @@ export interface GenerateInput {
   /** Для mock-генератора: подпись на стикере. */
   emoji: string;
   label: string;
-  /** Уровень пака — провайдер может выбирать качество/модель под экономику. */
+  /** Уровень пака - провайдер может выбирать качество/модель под экономику. */
   tier?: "free" | "paid" | "premium";
 }
 
@@ -21,12 +21,12 @@ export interface ImageGenerator {
   removeBackground?(image: Buffer, signal?: AbortSignal): Promise<Buffer>;
 }
 
-/** Ошибка настройки провайдера (неверный ключ, модель, нет денег на счету) — ретраи бесполезны. */
+/** Ошибка настройки провайдера (неверный ключ, модель, нет денег на счету) - ретраи бесполезны. */
 export class ProviderConfigError extends Error {
   override name = "ProviderConfigError";
 }
 
-/** Временная ошибка (таймаут, 5xx, 429) — стоит повторить. */
+/** Временная ошибка (таймаут, 5xx, 429) - стоит повторить. */
 export class ProviderTransientError extends Error {
   override name = "ProviderTransientError";
 }
@@ -37,14 +37,14 @@ export function toDataUri(buf: Buffer, mime = "image/jpeg"): string {
 
 /**
  * Подстановка в JSON-шаблон входа модели. Плейсхолдеры: {{prompt}}, {{negative_prompt}}, {{image_url}}, {{seed}}.
- * Если строка целиком равна плейсхолдеру {{seed}} — подставляется число.
+ * Если строка целиком равна плейсхолдеру {{seed}} - подставляется число.
  */
 export function renderTemplate(template: string, vars: Record<string, string | number>): unknown {
   let parsed: unknown;
   try {
     parsed = JSON.parse(template);
   } catch (e) {
-    throw new ProviderConfigError(`шаблон входа модели — невалидный JSON: ${(e as Error).message}`);
+    throw new ProviderConfigError(`шаблон входа модели - невалидный JSON: ${(e as Error).message}`);
   }
   const walk = (v: unknown): unknown => {
     if (typeof v === "string") {
@@ -124,7 +124,7 @@ const sleep = (ms: number, signal?: AbortSignal) =>
   });
 
 /* ------------------------------------------------------------------ */
-/* fal.ai — queue API                                                  */
+/* fal.ai - queue API                                                  */
 /* ------------------------------------------------------------------ */
 
 const FAL_DEFAULT_TEMPLATE = JSON.stringify({
@@ -193,7 +193,7 @@ export class FalGenerator implements ImageGenerator {
 }
 
 /* ------------------------------------------------------------------ */
-/* Replicate — predictions API                                         */
+/* Replicate - predictions API                                         */
 /* ------------------------------------------------------------------ */
 
 const REPLICATE_DEFAULT_TEMPLATE = JSON.stringify({
@@ -250,7 +250,7 @@ export class ReplicateGenerator implements ImageGenerator {
 }
 
 /* ------------------------------------------------------------------ */
-/* Mock — без ИИ, для разработки, тестов и демо                        */
+/* Mock - без ИИ, для разработки, тестов и демо                        */
 /* ------------------------------------------------------------------ */
 
 const PALETTE = ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#8338EC", "#FF9F1C", "#2EC4B6", "#E71D36"];
@@ -271,26 +271,19 @@ export class MockGenerator implements ImageGenerator {
       .composite([{ input: circle, blend: "dest-in" }])
       .png()
       .toBuffer();
-    const label = escapeXml(input.label);
     const overlay = Buffer.from(
       `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="${size / 2}" cy="${size / 2 - 40}" r="${face / 2 + 16}" fill="${color}"/>
-        <rect x="${size / 2 - 190}" y="${size - 190}" width="380" height="96" rx="48" fill="${color}" stroke="#222" stroke-width="6"/>
-        <text x="${size / 2}" y="${size - 124}" font-family="DejaVu Sans, Arial, sans-serif" font-size="46" font-weight="700" text-anchor="middle" fill="#111">${label}</text>
+        <circle cx="${size / 2}" cy="${size / 2}" r="${face / 2 + 16}" fill="${color}"/>
       </svg>`,
     );
     return sharp({ create: { width: size, height: size, channels: 3, background: "#ffffff" } })
       .composite([
         { input: overlay, top: 0, left: 0 },
-        { input: faceImg, top: size / 2 - 40 - face / 2, left: (size - face) / 2 },
+        { input: faceImg, top: (size - face) / 2, left: (size - face) / 2 },
       ])
       .png()
       .toBuffer();
   }
-}
-
-function escapeXml(s: string): string {
-  return s.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]!);
 }
 
 export function createGenerator(c: Config): ImageGenerator {

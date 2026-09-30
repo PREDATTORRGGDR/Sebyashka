@@ -40,7 +40,7 @@ export function validateInitData(raw: string, botToken: string, maxAgeSec = 24 *
 
   const authDate = Number(params.get("auth_date"));
   if (!Number.isFinite(authDate) || authDate <= 0) throw new InitDataError("нет auth_date");
-  if (now / 1000 - authDate > maxAgeSec) throw new InitDataError("initData устарели — перезапусти мини-приложение");
+  if (now / 1000 - authDate > maxAgeSec) throw new InitDataError("initData устарели - перезапусти мини-приложение");
 
   const userRaw = params.get("user");
   if (!userRaw) throw new InitDataError("нет user");
@@ -48,7 +48,7 @@ export function validateInitData(raw: string, botToken: string, maxAgeSec = 24 *
   try {
     user = JSON.parse(userRaw) as WebAppUser;
   } catch {
-    throw new InitDataError("user — не JSON");
+    throw new InitDataError("user - не JSON");
   }
   if (!Number.isSafeInteger(user.id) || user.id <= 0) throw new InitDataError("некорректный user.id");
   return {

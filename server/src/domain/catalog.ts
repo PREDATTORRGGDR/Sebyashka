@@ -1,6 +1,6 @@
 /**
- * Каталог: стили, эмоции и товары. Всё, что влияет на деньги, — здесь.
- * Экономика и обоснование цен — в docs/ECONOMICS.md.
+ * Каталог: стили, эмоции и товары. Всё, что влияет на деньги, - здесь.
+ * Экономика и обоснование цен - в docs/ECONOMICS.md.
  */
 
 export interface Style {
@@ -15,7 +15,7 @@ export const STYLES: readonly Style[] = [
   {
     id: "original",
     title: "Как на фото",
-    description: "Сохраняет рисовку персонажа — для героев, питомцев, аватарок",
+    description: "Сохраняет рисовку персонажа - для героев, питомцев, аватарок",
     premium: false,
     prompt: "keep the exact original art style, colors and design of the character from the reference image",
   },
@@ -84,7 +84,7 @@ export interface Emotion {
   prompt: string;
 }
 
-/** Порядок важен: бесплатный пак берёт первые FREE_PACK_SIZE эмоций, платный — первые STICKERS_PER_PACK. */
+/** Порядок важен: бесплатный пак берёт первые FREE_PACK_SIZE эмоций, платный - первые STICKERS_PER_PACK. */
 export const EMOTIONS: readonly Emotion[] = [
   { id: "happy", emoji: "😄", title: "Радость", prompt: "big happy smile" },
   { id: "lol", emoji: "😂", title: "Ржу", prompt: "laughing hard with tears of joy" },
@@ -182,7 +182,7 @@ export const PRODUCTS: readonly Product[] = [
     id: "pack_3",
     kind: "credits",
     title: "3 пака",
-    description: "Три пака — попробуй разные стили",
+    description: "Три пака - попробуй разные стили",
     credits: 3,
     stars: 390,
     usd: "4.99",
@@ -230,7 +230,10 @@ export const STAR_USD = 0.013;
 /** Награда пригласившему, когда приглашённый впервые что-то купил. */
 export const REFERRAL_REWARD_CREDITS = 1;
 
-/** Период подписки Stars в секундах — Telegram поддерживает только 30 дней. */
+/** +1 пак пригласившему за каждых столько приглашённых друзей. */
+export const INVITES_PER_REWARD = 3;
+
+/** Период подписки Stars в секундах - Telegram поддерживает только 30 дней. */
 export const STARS_SUBSCRIPTION_PERIOD = 30 * 24 * 60 * 60;
 
 export function emotionsFor(count: number): Emotion[] {

@@ -100,7 +100,7 @@ export async function fulfillPayment(sql: Sql, ev: PaymentEvent): Promise<Fulfil
           RETURNING *`
       )[0]!;
     } else if (base.status === "pending" || base.status === "expired") {
-      // expired тоже принимаем: CryptoBot мог прислать оплату после нашего таймаута — деньги-то пришли.
+      // expired тоже принимаем: CryptoBot мог прислать оплату после нашего таймаута - деньги-то пришли.
       order = (
         await tx<OrderRow[]>`
           UPDATE orders SET status = 'paid', paid_at = now(), provider_charge_id = ${ev.chargeId},
@@ -110,7 +110,7 @@ export async function fulfillPayment(sql: Sql, ev: PaymentEvent): Promise<Fulfil
           WHERE id = ${base.id} RETURNING *`
       )[0]!;
     } else {
-      // Заказ уже оплачен другим платежом (двойная оплата одного счёта) — фиксируем, чтобы разобраться вручную.
+      // Заказ уже оплачен другим платежом (двойная оплата одного счёта) - фиксируем, чтобы разобраться вручную.
       throw new AppError("PAYMENT_ERROR", `заказ ${base.id} уже в статусе ${base.status}, платёж ${ev.chargeId} требует ручной проверки`);
     }
 
@@ -169,7 +169,7 @@ export async function redeemGift(sql: Sql, userId: number, code: string): Promis
     if (!g || g.revoked) throw new AppError("GIFT_INVALID", "Подарок не найден или отменён");
     if (g.redeemed_by === userId) throw new AppError("GIFT_USED", "Ты уже получил этот подарок");
     if (g.redeemed_by) throw new AppError("GIFT_USED", "Этот подарок уже кто-то забрал");
-    if (g.buyer_id === userId) throw new AppError("GIFT_OWN", "Нельзя забрать свой же подарок — отправь ссылку другу");
+    if (g.buyer_id === userId) throw new AppError("GIFT_OWN", "Нельзя забрать свой же подарок - отправь ссылку другу");
     await lockUser(tx, userId);
     const r = await changeCredits(tx, userId, g.credits, "gift", code);
     await tx`UPDATE gifts SET redeemed_by = ${userId}, redeemed_at = now() WHERE code = ${code}`;

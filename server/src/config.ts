@@ -17,10 +17,10 @@ const schema = z
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
     BOT_TOKEN: z.string().regex(/^\d+:[\w-]{30,}$/, "BOT_TOKEN выглядит неверно (формат 123456:ABC...)"),
-    // Без @. Если не задан — берётся из getMe при старте.
+    // Без @. Если не задан - берётся из getMe при старте.
     BOT_USERNAME: z.string().regex(/^[A-Za-z][\w]{3,31}$/).optional(),
     BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
-    // Свой Bot API сервер (https://github.com/tdlib/telegram-bot-api) или тестовый стенд. По умолчанию — официальный.
+    // Свой Bot API сервер (https://github.com/tdlib/telegram-bot-api) или тестовый стенд. По умолчанию - официальный.
     TELEGRAM_API_ROOT: z.string().url().default("https://api.telegram.org"),
     TELEGRAM_WEBHOOK_SECRET: z.string().regex(/^[\w-]{16,256}$/).optional(),
     // Короткое имя Main Mini App в BotFather не требуется: используем ссылку ?startapp.
@@ -102,7 +102,7 @@ const schema = z
     }
     if (c.NODE_ENV === "production" && c.GEN_PROVIDER === "mock") {
       // Не ошибка, но в проде почти наверняка забыли переключить провайдера.
-      console.warn("[config] ВНИМАНИЕ: GEN_PROVIDER=mock в production — стикеры будут без ИИ.");
+      console.warn("[config] ВНИМАНИЕ: GEN_PROVIDER=mock в production - стикеры будут без ИИ.");
     }
   });
 

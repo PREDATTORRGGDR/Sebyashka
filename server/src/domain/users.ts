@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { Db, Sql, Tx } from "../db/client.js";
 import { AppError, isUniqueViolation } from "../errors.js";
+import { INVITES_PER_REWARD } from "./catalog.js";
 
 export interface UserRow {
   id: number;
@@ -64,7 +65,7 @@ export async function upsertUser(sql: Sql, tg: TgUser, opts: { startedBot?: bool
       const { inserted, ...user } = rows[0]!;
       return { user, isNew: inserted };
     } catch (e) {
-      // Коллизия referral_code — крайне редка, просто пробуем другой код.
+      // Коллизия referral_code - крайне редка, просто пробуем другой код.
       if (isUniqueViolation(e) && String((e as Error).message).includes("referral_code")) continue;
       throw e;
     }
@@ -88,8 +89,9 @@ export async function lockUser(tx: Tx, id: number): Promise<UserRow> {
  *  - только если реферер ещё не задан;
  *  - пользователь зарегистрировался не раньше чем сутки назад и ничего не покупал;
  *  - реферер зарегистрирован раньше (исключает циклы A→B→A и дедлоки при начислении).
+ * Каждый INVITES_PER_REWARD-й приглашённый приносит рефереру +1 пак (rewarded = true).
  */
-export async function attachReferrer(sql: Sql, userId: number, refCode: string): Promise<number | null> {
+export async function attachReferrer(sql: Sql, userId: number, refCode: string): Promise<{ referrerId: number; rewarded: boolean } | null> {
   if (!/^[a-z0-9]{4,16}$/.test(refCode)) return null;
   const rows = await sql<{ id: number }[]>`
     UPDATE users u SET referred_by = r.id, updated_at = now()
@@ -102,7 +104,17 @@ export async function attachReferrer(sql: Sql, userId: number, refCode: string):
       AND u.created_at > now() - interval '1 day'
       AND u.total_paid_stars = 0 AND u.total_paid_usd = 0
     RETURNING r.id`;
-  return rows[0]?.id ?? null;
+  const referrerId = rows[0]?.id;
+  if (!referrerId) return null;
+  // +1 пак за каждых INVITES_PER_REWARD приглашённых. Идемпотентно: ref = "<реферер>:<номер тройки>".
+  // ponytail: засчитывается любой новый аккаунт - от фейков защищает только «сутки с регистрации»; нужны строже - считать после первого пака друга.
+  const rewarded = await sql.begin(async (tx) => {
+    await lockUser(tx, referrerId);
+    const n = (await tx<{ n: number }[]>`SELECT count(*)::int AS n FROM users WHERE referred_by = ${referrerId}`)[0]!.n;
+    if (n % INVITES_PER_REWARD !== 0) return false;
+    return (await changeCredits(tx, referrerId, 1, "invite", `${referrerId}:${n / INVITES_PER_REWARD}`)).applied;
+  });
+  return { referrerId, rewarded };
 }
 
 export interface CreditChange {

@@ -19,7 +19,7 @@ export type AlertType = keyof typeof ALERT_TYPES;
 const MAX_MESSAGE = 3800;
 
 /**
- * Алерты админам. События копятся 3 секунды и уходят одним сообщением на каждого получателя —
+ * Алерты админам. События копятся 3 секунды и уходят одним сообщением на каждого получателя -
  * так бот не упрётся в лимиты Telegram даже при наплыве пользователей.
  */
 export class AdminNotifier {
@@ -74,7 +74,7 @@ export class AdminNotifier {
       this.muted = new Map(rows.map((r) => [r.admin_id, new Set(r.muted)]));
       this.mutedLoadedAt = Date.now();
     } catch {
-      /* таблица может быть недоступна — шлём всё */
+      /* таблица может быть недоступна - шлём всё */
     }
   }
 

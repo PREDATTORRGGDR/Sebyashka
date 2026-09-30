@@ -20,7 +20,7 @@ import { verifyCryptoBotSignature, type CryptoWebhookUpdate } from "../payments/
 import type { PaymentService } from "../payments/service.js";
 import { paths, type Storage, type UrlSigner } from "../storage.js";
 import { InitDataError, parseStartParam, validateInitData } from "../telegram/initData.js";
-import { esc, failureReasonForUser } from "../texts.js";
+import { esc, failureReasonForUser, T } from "../texts.js";
 import { who, type AdminNotifier } from "../admin/notifier.js";
 import { findUsers, getFunnel, getStats, recentPayments, userCard } from "../admin/queries.js";
 import { changeCredits, lockUser } from "../domain/users.js";
@@ -168,7 +168,8 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
         let user = req.user!;
         const sp = parseStartParam(req.startParam);
         const notices: string[] = [];
-        if (sp.ref) await attachReferrer(sql, user.id, sp.ref);
+        const referrer = sp.ref ? await attachReferrer(sql, user.id, sp.ref) : null;
+        if (referrer?.rewarded) await d.bot.api.sendMessage(referrer.referrerId, T.inviteReward(), { parse_mode: "HTML" }).catch(() => {});
         if (sp.gift) {
           try {
             const g = await redeemGift(sql, user.id, sp.gift);
@@ -261,7 +262,7 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
       api.get<{ Params: { id: string } }>("/orders/:id", async (req) => {
         const order = await getOrder(sql, req.params.id);
         if (!order || order.user_id !== req.user!.id) throw new AppError("NOT_FOUND", "Заказ не найден");
-        // Пользователь вернулся из CryptoBot раньше вебхука — проверим сами.
+        // Пользователь вернулся из CryptoBot раньше вебхука - проверим сами.
         if (order.provider === "cryptobot" && order.status === "pending" && order.provider_invoice_id && d.payments.crypto) {
           const [inv] = await d.payments.crypto.getInvoices([Number(order.provider_invoice_id)]).catch(() => []);
           if (inv?.status === "paid") await d.payments.onCryptoInvoicePaid(inv).catch(() => null);
@@ -366,7 +367,7 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
       prefix: "/",
       index: ["index.html"],
       setHeaders: (res, filePath) => {
-        // Хешированные ассеты кешируем навсегда, index.html — никогда (иначе пользователи не увидят обновления).
+        // Хешированные ассеты кешируем навсегда, index.html - никогда (иначе пользователи не увидят обновления).
         res.header("Cache-Control", filePath.includes(`${path.sep}assets${path.sep}`) ? "public, max-age=31536000, immutable" : "no-cache");
       },
     });
@@ -377,7 +378,7 @@ export async function buildServer(d: ApiDeps): Promise<FastifyInstance> {
       return reply.status(404).send({ error: "NOT_FOUND", message: "Не найдено" });
     });
   } else {
-    d.log.warn({ dist }, "сборка мини-приложения не найдена — отдаю только API (выполни npm run build -w webapp)");
+    d.log.warn({ dist }, "сборка мини-приложения не найдена - отдаю только API (выполни npm run build -w webapp)");
   }
 
   return app;

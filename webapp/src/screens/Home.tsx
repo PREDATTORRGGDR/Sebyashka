@@ -35,11 +35,11 @@ export function Home() {
         <HeroArt />
         <h2 className="h2">Стикеры из любого фото</h2>
         <p className="muted" style={{ margin: "6px 0 16px", lineHeight: 1.45 }}>
-          Любое фото — ты, друг, питомец или персонаж — и через пару минут свой стикерпак в Telegram. 9 стилей и пожелания текстом.
+          Любое фото - ты, друг, питомец или персонаж - и через пару минут свой стикерпак в Telegram. 9 стилей и пожелания текстом.
         </p>
         {user.freePackAvailable ? (
           <Button icon={<Gift size={20} />} onClick={() => go({ name: "create" })}>
-            Бесплатный мини-пак
+            2 стикера бесплатно
           </Button>
         ) : (
           <Button icon={<Sparkles size={20} />} onClick={() => go({ name: "create" })}>
@@ -80,7 +80,7 @@ export function Home() {
         <Glass className="card center" {...stagger(2)}>
           <EmptyArt />
           <div className="muted">
-            Пока пусто. Первый пак — за наш счёт.
+            Пока пусто. Первый пак - за наш счёт.
           </div>
         </Glass>
       ) : (

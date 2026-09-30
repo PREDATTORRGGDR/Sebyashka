@@ -71,10 +71,10 @@ export function Profile() {
       <Glass className="card col" style={{ gap: 12 }} {...stagger(1)}>
         <div className="row">
           <Users size={20} />
-          <b>Пригласи друга — получи пак</b>
+          <b>Пригласи 3 друзей - получи пак</b>
         </div>
         <div className="muted small" style={{ lineHeight: 1.45 }}>
-          Друг получит бесплатный мини-пак, а ты — +1 пак, когда он сделает первую покупку.
+          За каждых 3 друзей, пришедших по ссылке, - +1 пак. И ещё +1, когда друг сделает первую покупку.
         </div>
         <div className="row">
           <div className="input row" style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", fontSize: 13 }}>
@@ -90,7 +90,7 @@ export function Profile() {
           icon={<Share2 size={18} />}
           onClick={() => {
             void api.track("ref_share");
-            share(user.referralLink, "Делаю стикеры из любого фото — попробуй, первый пак бесплатно 😎");
+            share(user.referralLink, "Делаю стикеры из любого фото - попробуй бесплатно 😎");
           }}
         >
           Отправить друзьям
@@ -122,7 +122,7 @@ export function Profile() {
                 {g.redeemed ? <><Check size={14} /> Подарок получен</> : "Ждёт получателя"}
               </span>
               {!g.redeemed && (
-                <Button variant="ghost" size="sm" icon={<Share2 size={14} />} onClick={() => share(g.link, "Дарю тебе стикерпак — сделай из любого фото 🎁")}>
+                <Button variant="ghost" size="sm" icon={<Share2 size={14} />} onClick={() => share(g.link, "Дарю тебе стикерпак - сделай из любого фото 🎁")}>
                   Отправить
                 </Button>
               )}

@@ -164,6 +164,6 @@ export async function compressImage(file: File, maxSide = 1280): Promise<Blob> {
     const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.9));
     return blob ?? file;
   } catch {
-    return file; // HEIC и прочее, что браузер не декодирует, — пусть разбирается сервер
+    return file; // HEIC и прочее, что браузер не декодирует, - пусть разбирается сервер
   }
 }

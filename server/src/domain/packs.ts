@@ -55,7 +55,7 @@ export function stickerSetName(packId: string, botUsername: string): string {
 }
 
 export function stickerSetTitle(firstName: string, styleTitle: string, botUsername: string): string {
-  // Убираем то, что Telegram может не принять, и оставляем @бота в конце — это наша бесплатная реклама.
+  // Убираем то, что Telegram может не принять, и оставляем @бота в конце - это наша бесплатная реклама.
   const name = firstName.replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 24) || "Себяшка";
   const suffix = ` · @${botUsername}`;
   const title = `${name} · ${styleTitle}`;
@@ -86,12 +86,12 @@ export async function createPack(sql: Sql, storage: Storage, cfg: Config, botUse
   if (!user.selfie_path || !user.selfie_uploaded_at) throw new AppError("NO_SELFIE", "Сначала загрузи фото");
   const ageH = (Date.now() - user.selfie_uploaded_at.getTime()) / 3_600_000;
   if (ageH > cfg.SELFIE_TTL_HOURS || !(await storage.exists(user.selfie_path))) {
-    throw new AppError("SELFIE_EXPIRED", "Фото удалено ради приватности — загрузи новое");
+    throw new AppError("SELFIE_EXPIRED", "Фото удалено ради приватности - загрузи новое");
   }
   const w = sanitizeWish(input.wish);
   if (!w.ok) throw new AppError("BAD_REQUEST", w.reason);
   const admin = !!input.isAdmin;
-  if (input.free && style.premium && !admin) throw new AppError("FREE_STYLE_ONLY", "Бесплатный пак — только в обычных стилях");
+  if (input.free && style.premium && !admin) throw new AppError("FREE_STYLE_ONLY", "Бесплатный пак - только в обычных стилях");
 
   const packId = randomUUID();
   const selfieCopy = paths.packSelfie(packId);
@@ -141,7 +141,7 @@ export async function createPack(sql: Sql, storage: Storage, cfg: Config, botUse
 }
 
 /**
- * Провал пака: возвращаем кредиты (или бесплатную попытку). Идемпотентно — повторный вызов не вернёт дважды.
+ * Провал пака: возвращаем кредиты (или бесплатную попытку). Идемпотентно - повторный вызов не вернёт дважды.
  */
 export async function failPack(sql: Sql, packId: string, error: string): Promise<{ refunded: number; pack: PackRow } | null> {
   return sql.begin(async (tx) => {
@@ -205,7 +205,7 @@ export async function requeue(sql: Sql, packId: string, error: string): Promise<
   await sql`UPDATE packs SET status = 'queued', locked_at = NULL, error = ${error.slice(0, 500)}, updated_at = now() WHERE id = ${packId}`;
 }
 
-/** После /start в боте — повторить загрузку паков, которые ждали пользователя. */
+/** После /start в боте - повторить загрузку паков, которые ждали пользователя. */
 export async function requeueNeedsStart(sql: Sql, userId: number): Promise<number> {
   const rows = await sql`
     UPDATE packs SET status = 'queued', locked_at = NULL, attempts = 0, updated_at = now()
