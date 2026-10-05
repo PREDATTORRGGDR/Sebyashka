@@ -108,7 +108,7 @@ export async function createPack(sql: Sql, storage: Storage, cfg: Config, botUse
       let cost = 0;
       let size: number;
       if (admin) {
-        size = cfg.FREE_PACK_SIZE; // админ: мини-пак без списания, чтобы не жечь деньги на fal
+        size = cfg.STICKERS_PER_PACK; // админ: полный пак без списания, без лимита по числу паков
       } else if (input.free) {
         if (u.free_pack_used) throw new AppError("FREE_PACK_USED", "Бесплатный пак уже использован");
         await tx`UPDATE users SET free_pack_used = TRUE WHERE id = ${u.id}`;
